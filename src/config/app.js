@@ -33,4 +33,5 @@ module.exports = {
    * Stores if server is Secure or not for Secure flag in cookies
    */
   secure: process.env.APP_SECURE === "true" || false,
+
 };

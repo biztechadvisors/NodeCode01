@@ -726,9 +726,11 @@ module.exports = {
           });
         })
         .catch(function (err) {
+          console.log(err)
           next(err);
         });
     } catch (err) {
+      console.log(err)
       res.status(500).json({ errors: "" + err });
     }
   },

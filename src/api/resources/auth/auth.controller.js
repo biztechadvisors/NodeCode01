@@ -10,13 +10,13 @@ const Util = require("../../../helpers/Util");
 var JWTSign = function (user, date) {
   return JWT.sign(
     {
-      iss: config.app.name,
+      iss: process.env.name,
       sub: user.id,
       iam: user.type,
       iat: date.getTime(),
       exp: new Date().setDate(date.getDate() + 2),
     },
-    config.app.secret
+    process.env.APP_SECRET
   );
 };
 
@@ -223,7 +223,7 @@ module.exports = {
     res.cookie("XSRF-token", token, {
       expire: new Date().setDate(date.getDate() + 2),
       httpOnly: true,
-      secure: config.app.secure,
+      secure: process.env.APP_SECURE,
     });
     return res.status(200).json({ success: true, token, role: req.user.role });
   },
