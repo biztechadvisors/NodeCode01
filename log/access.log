@@ -322,3 +322,5 @@
 [0mGET /api/category/admin/main-list [36m304[0m 41.899 ms - -[0m
 [0mGET /api/category/sub-list [36m304[0m 43.412 ms - -[0m
 [0mGET /api/category/admin/main-list [36m304[0m 47.608 ms - -[0m
+[0mGET /api/category/getAllSubCategory?categoryId=14 [32m200[0m 58.696 ms - 746[0m
+[0mGET /api/website/catalog/product/search?filter_category=boy [32m200[0m 284.910 ms - 4075[0m

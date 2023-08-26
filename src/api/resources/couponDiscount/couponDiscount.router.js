@@ -18,7 +18,7 @@ couponDiscountRouter.route("/coupon-status").put(jwtStrategy, couponDiscountCont
 
 couponDiscountRouter.delete("/couponDesc-delete", jwtStrategy, couponDiscountController.deleteCoupon);
 
-couponDiscountRouter.get("/apply-coupon", couponDiscountController.applyCouponCode);
+couponDiscountRouter.post("/apply-coupon", couponDiscountController.applyCouponCode);
 
 couponDiscountRouter.post("/changeDeliveryCharge", couponDiscountController.changeDeliveryCharge);
 
