@@ -544,14 +544,14 @@ module.exports = {
     }
 
     if (filter_SubCategory) {
-      const subCategories = filter_SubCategory.split(",");
-      const subCategoryId = await db.SubCategory.findAll({
+      const [subCategory] = await db.SubCategory.findAll({
         attributes: ["id"],
-        where: { slug: { [Op.in]: subCategories } },
+        where: { sub_name: filter_SubCategory },
         raw: true,
       });
-      if (subCategoryId.length > 0) {
-        whereCond0.push({ subCategoryId: { [Op.in]: subCategoryId.map(({ id }) => id) } });
+      if (subCategory) {
+        whereCond0.push({ subCategoryId: subCategory.id });
+        console.log(whereCond0)
       }
     }
 
