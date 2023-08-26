@@ -700,7 +700,6 @@ module.exports = {
 
   async uploadMainProdImage(req, res, next) {
     try {
-      console.log("first", req.body)
       db.product.findOne({
         where: { id: req.body.productId },
       })
@@ -778,7 +777,6 @@ module.exports = {
 
   async deleteMainProdImage(req, res, next) {
     try {
-      console.log("first", req.body)
       deleteFileFromS3(req.body.thumbnail)
         .then((data) => {
           if (!data) {

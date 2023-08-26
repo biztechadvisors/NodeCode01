@@ -1,27 +1,27 @@
 const express = require("express");
 const sellerController = require("./seller.controller");
-const { jwtStrategy } = require("../../../middleware/strategy");
+// const { jwtStrategy } = require("../../../middleware/strategy");
 const upload = require("../../../awsbucket");
 
 const sellerRouter = express.Router();
 
 sellerRouter.route("/product/create").post(
-  jwtStrategy,
+
   sellerController.createProduct
 );
 
 sellerRouter.route("/product/update").put(
-  jwtStrategy,
+
   sellerController.updateProduct
 );
 
 sellerRouter.route("/product/list").post(
-  jwtStrategy,
+
   sellerController.getAllProduct
 );
 
 sellerRouter.route("/product/list-by-id").post(
-  jwtStrategy,
+
   sellerController.getPrductById
 );
 
@@ -30,7 +30,7 @@ sellerRouter.route("/admin/product/search").get(
 );
 
 sellerRouter.route("/image/single-upload").put(
-  jwtStrategy,
+
   upload.single("thumbnail"),
   sellerController.uploadSingleImage
 );
@@ -41,37 +41,37 @@ sellerRouter.route("/image/main-upload").put(
 );
 
 sellerRouter.route("/image/delete").put(
-  jwtStrategy,
+
   sellerController.deleteThumbnail
 );
 
 sellerRouter.route("/image/main-delete").put(
-  jwtStrategy,
+
   sellerController.deleteMainProdImage
 );
 
 sellerRouter.route("/product/getAllList").get(
-  jwtStrategy,
+
   sellerController.getAllList
 );
 
 sellerRouter.route("/coupon/create").post(
-  jwtStrategy,
+
   sellerController.couponCreate
 );
 
 sellerRouter.route("/coupon/list").get(
-  jwtStrategy,
+
   sellerController.couponList
 );
 
 sellerRouter.route("/coupon").delete(
-  jwtStrategy,
+
   sellerController.couponDelete
 );
 
 sellerRouter.route("/brand/list").get(
-  jwtStrategy,
+
   sellerController.getAllBrandList
 );
 
@@ -84,7 +84,7 @@ sellerRouter.route("/history-product").get(
 );
 
 sellerRouter.route("/common-name").put(
-  jwtStrategy,
+
   sellerController.CommonName
 );
 
