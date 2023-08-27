@@ -20,7 +20,6 @@ let getTargetProduct = (targets) => {
   return targetProduct;
 };
 
-
 module.exports = {
   init: () => {
     queue.process("img-upload", function (job, done) {

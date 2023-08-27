@@ -246,22 +246,16 @@ module.exports = {
               <tr>
                 <td style="height:35px;"></td>
               </tr>
-        
               <tr>
                 <td style="width:50%;padding:2px;vertical-align:top">
                   <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span
                       style="display:block;font-weight:bold;font-size:14px">Name</span> ${name}</p>
-        
                 </td>
                 <td style="width:50%;padding:2px;vertical-align:top">
                   <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span
-                      style="display:block;font-weight:bold;font-size:14px;">Email</span> ${user.email
-      }</p>
-        
+                      style="display:block;font-weight:bold;font-size:14px;">Email</span> ${user.email}</p>
                 </td>
               </tr>
-        
-        
               <tr>
                 <td colspan="2" style="border: solid 1px #ddd; padding:10px 20px;">
                   <p style="font-size:14px;margin:0 0 6px 0;"><span
@@ -301,8 +295,7 @@ module.exports = {
               </tr>
               `;
         })
-        .join("")}
-              `;
+        .join("")}`;
 
     const htmlFooter = ` </tbody>
             <tfooter>
@@ -310,17 +303,15 @@ module.exports = {
               <tr>
                 <td style="height:50px;"></td>
               </tr>
-        
               <td colspan="2" style="font-size:14px;padding:2px;">
-                <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team souqarena<br><br>
-                For any queries please contact us at: <b>support@souqarena.com</b>
+                <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team NinobyVani<br><br>
+                For any queries please contact us at: <b>support@ninobyvani.com</b>
               </td>
               </tr>
             </tfooter>
             
           </table>
         </body>
-        
         </html>`;
     const totalHtml = htmlHeader + htmlFooter;
     return new Promise((resolve, reject) => {
@@ -347,7 +338,7 @@ module.exports = {
                     from: process.env.MAIL_FROM,
                     to: user.email,
                     subject:
-                      "Your souqarena Order Confirmation. Please share your feedback",
+                      "Your NinobyVani Order Confirmation. Please share your feedback",
                     html: totalHtml,
                   },
                   function (error, info) {
@@ -396,19 +387,14 @@ module.exports = {
               <tr>
                 <td style="width:50%;padding:2px;vertical-align:top">
                   <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span
-                      style="display:block;font-weight:bold;font-size:14px">Name</span> ${address.fullname
-      }</p>
-        
+                      style="display:block;font-weight:bold;font-size:14px">Name</span> ${address.fullname}</p>    
                 </td>
                 <td style="width:50%;padding:2px;vertical-align:top">
                   <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span
-                      style="display:block;font-weight:bold;font-size:14px;">Email</span> ${address.email
-      }</p>
+                      style="display:block;font-weight:bold;font-size:14px;">Email</span> ${customer.email}</p>
         
                 </td>
               </tr>
-        
-        
               <tr>
                 <td colspan="2" style="border: solid 1px #ddd; padding:10px 20px;">
                   <p style="font-size:14px;margin:0 0 6px 0;"><span
@@ -417,27 +403,18 @@ module.exports = {
                   <p style="font-size:14px;margin:0 0 6px 0;"><span
                       style="font-weight:bold;display:inline-block;min-width:146px">Order ID</span> ${order_id}</p>
                   <p style="font-size:14px;margin:0 0 0 0;"><span
-                      style="font-weight:bold;display:inline-block;min-width:146px">Order amount</span> Rs. ${body.grandTotal
-      }</p>
-                <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Phone No</span> ${address ? address.phone : body.deliveryAddress.phone
-      }</p>
-                      <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping Address</span>${address.shipping +
-      ", " +
-      address.city +
-      ", " +
-      address.states
-      }  </p>
+                      style="font-weight:bold;display:inline-block;min-width:146px">Order amount</span> Rs. ${body.grandTotal}</p>
+                <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Phone No</span> ${address ? address.phone : body.deliveryAddress.phone}</p>
+                      <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping Address</span>${address.shipping +", " + address.city + ", " + address.states}  </p>
                 </td>
               </tr>
               <tr>
                 <td style="height:20px;"></td>
               </tr>
-        
               <tr>
                 <td colspan="2" style="font-size:14px;padding:2px;font-weight: bold;">Items</td>
               </tr>
-              ${body.product
-        .map(function (item) {
+              ${body.product.map(function (item) {
           return `
               <tr style="border:solid 1px #ddd;">
                 <td style="padding:2px;width:50%;">
@@ -448,18 +425,12 @@ module.exports = {
                   <p style="font-size:14px;margin:0;">${item.Name}</p>
                 </td>
                 <td style="padding:2px;width:50%;text-align: right;">
-                  <p style="font-size:14px;margin:0;"> Rs.${item.quantity +
-            "*" +
-            item.netPrice +
-            "=" +
-            item.quantity * item.netPrice
-            }</p>
+                  <p style="font-size:14px;margin:0;"> Rs.${item.quantity + "*" + item.netPrice + "=" + item.quantity * item.netPrice }</p>
                 </td>
               </tr>
               `;
         })
-        .join("")}
-              `;
+        .join("")}`;
 
     const htmlFooter = ` </tbody>
             <tfooter>
@@ -467,17 +438,14 @@ module.exports = {
               <tr>
                 <td style="height:50px;"></td>
               </tr>
-        
               <td colspan="2" style="font-size:14px;padding:2px;">
                 <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team codenox<br><br>
                 For any queries please contact us at: <b>codenox.advisor@gmail.com</b>
               </td>
               </tr>
-            </tfooter>
-            
+            </tfooter>            
           </table>
-        </body>
-        
+        </body>       
         </html>`;
     const totalHtml = htmlHeader + htmlFooter;
     return new Promise((resolve, reject) => {

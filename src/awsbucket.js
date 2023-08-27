@@ -12,7 +12,7 @@ AWS.config.update({
 
 const s3 = new AWS.S3();
 const fileFilter = (req, file, cb) => {
-  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png") {
+  if (file.mimetype === "image/jpeg" || file.mimetype === "image/png" || file.mimetype === "image/svg") {
     cb(null, true);
   } else {
     cb(new Error("Invalid Mime Type, only JPEG and PNG"), false);
