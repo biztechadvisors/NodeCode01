@@ -1,6 +1,6 @@
 const express = require("express");
 const locationController = require("./location.controller");
-const { jwtStrategy, jwtCustomerStrategy } = require("../../../middleware/strategy");
+const {  jwtCustomerStrategy } = require("../../../middleware/strategy");
 
 const locationRouter = express.Router();
 

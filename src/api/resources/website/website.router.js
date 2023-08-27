@@ -33,20 +33,20 @@ websiteRouter.route("/catalog/category/search").get(websiteController.getFilterA
 
 websiteRouter.route("/autosuggest/search").get(websiteController.getAutoSuggestList);
 
-websiteRouter.route("/address/create").post(jwtCustomerStrategy, websiteController.createAddress);
+websiteRouter.route("/address/create").post( websiteController.createAddress);
 
 websiteRouter.route("/customization").post(websiteController.customizationPage);
 
 websiteRouter.route("/customization-List").get(websiteController.customizationList);
 
 // Order
-websiteRouter.route("/order/product_list").post(jwtCustomerStrategy, websiteController.orderProductList);
+websiteRouter.route("/order/product_list").post( websiteController.orderProductList);
 
-websiteRouter.route("/order/history").get(jwtCustomerStrategy, websiteController.orderHistory);
+websiteRouter.route("/order/history").get( websiteController.orderHistory);
 
-websiteRouter.route("/order/product_detail").post(jwtCustomerStrategy, websiteController.orderProductDetail);
+websiteRouter.route("/order/product_detail").post( websiteController.orderProductDetail);
 
-websiteRouter.route("/order/cancel-by-product").post(jwtCustomerStrategy, websiteController.orderdProductCancel);
+websiteRouter.route("/order/cancel-by-product").post( websiteController.orderdProductCancel);
 
 websiteRouter.route("/allEvent").get(websiteController.allEvent);
 

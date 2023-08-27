@@ -5,8 +5,7 @@ const { jwtStrategy } = require('../../../middleware/strategy');
 
 const businessRouter = express.Router();
 
-businessRouter.route('/getAllProductProfit').get(
-  //  jwtStrategy, 
+businessRouter.route('/getAllProductProfit').get( 
   businessController.getAllBill
 );
 

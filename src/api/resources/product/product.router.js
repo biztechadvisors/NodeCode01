@@ -1,12 +1,11 @@
 const express = require('express');
 const productController = require('./product.controller');
-const { jwtStrategy } = require('../../../middleware/strategy');
 const upload = require('../../../awsbucket');
 
 const productRouter = express.Router();
 
 productRouter.route('/add').post(
-  jwtStrategy,
+
   upload.single('photo'),
   productController.addProduct
 );
@@ -19,17 +18,17 @@ productRouter.route('/uploadPro').post(
 productRouter.route('/getAllproduct').get(productController.index);
 
 productRouter.route('/getAllproductList').post(
-  jwtStrategy,
+
   productController.getAllProductList
 );
 
 productRouter.route('/search/getAllproductList').get(
-  jwtStrategy,
+
   productController.searchAllProductList
 );
 
 productRouter.route('/update').post(
-  jwtStrategy,
+
   upload.single('photo'),
   productController.update
 );
@@ -55,17 +54,17 @@ productRouter.route('/getAllProductOffer').get(
 );
 
 productRouter.route('/delete').delete(
-  jwtStrategy,
+
   productController.productDelete
 );
 
 productRouter.route('/deleteOfferById/:id').get(
-  jwtStrategy,
+
   productController.productOfferDelete
 );
 
 productRouter.route('/upload-img').post(
-  jwtStrategy,
+
   upload.array('file', 10),
   productController.multiplePhotoUpload
 );
@@ -84,17 +83,17 @@ productRouter.route('/getAllPhotoById').post(
 );
 
 productRouter.route('/slider-photo/delete').delete(
-  jwtStrategy,
+
   productController.deleteSliderPhoto
 );
 
 productRouter.route('/varients-delete').delete(
-  jwtStrategy,
+
   productController.productVarients
 );
 
 productRouter.route('/main-delete').delete(
-  jwtStrategy,
+
   productController.deleteMainProduct
 );
 
@@ -119,23 +118,23 @@ productRouter.route('/filtersortby').post(
 );
 
 productRouter.route('/status/update').post(
-  jwtStrategy,
+
   productController.statusUpdate
 );
 
 productRouter.route('/update-stock').post(
-  jwtStrategy,
+
   productController.stockUpdate
 );
 
 productRouter.route('/banner-upload').post(
-  jwtStrategy,
+
   upload.single('banner'),
   productController.bannerUpload
 );
 
 productRouter.route('/admin/banner-list').get(
-  jwtStrategy,
+
   productController.bannerAdminList
 );
 
@@ -144,12 +143,12 @@ productRouter.route('/banner-list').get(
 );
 
 productRouter.route('/banner-status').post(
-  jwtStrategy,
+
   productController.bannerStatus
 );
 
 productRouter.route('/aws/delete/photo').post(
-  jwtStrategy,
+
   productController.awsProductPhotoDelete
 );
 
@@ -158,54 +157,54 @@ productRouter.route('/website/relatedProduct').post(
 );
 
 productRouter.route('/banner-delete').post(
-  jwtStrategy,
+
   productController.bannerListDelete
 );
 
 productRouter.route('/seo-create').post(
-  jwtStrategy,
+
   productController.seoDetailsList
 );
 
 productRouter.route('/color/create').post(
   upload.single('thumbnail'),
-  jwtStrategy,
+
   productController.createColorDetails
 );
 
 productRouter.route('/color-update').post(
   upload.single('thumbnail'),
-  jwtStrategy,
+
   productController.updateColorDetails
 );
 
 productRouter.route('/color/list').post(
-  jwtStrategy,
+
   productController.getColorList
 );
 
 productRouter.route('/color/delete').delete(
-  jwtStrategy,
+
   productController.deleteColorById
 );
 
 productRouter.route('/color/list').get(
-  jwtStrategy,
+
   productController.productColourList
 );
 
 productRouter.route('/getAllList').get(
-  jwtStrategy,
+
   productController.getProductForFlash
 );
 
 productRouter.route('/tag').get(
-  jwtStrategy,
+
   productController.getTag
 );
 
 productRouter.route('/tag').delete(
-  jwtStrategy,
+
   productController.getDeleteTag
 );
 
