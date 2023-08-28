@@ -646,26 +646,26 @@ module.exports = {
 
     async deleteOrderList(req, res, next) {
         try {
-
-            const Order = await db.Order.findOne({ where: { order_Id: req.body.id } });
-            const order_Id = Order.order_Id;
-            const shiprocketResponse = await shiprocketService.cancelOrder(order_Id);
-
+            const order = await db.Order.findOne({ where: { id: req.body.id } });
+            // const order_Id = Order.order_Id;
+            // const shiprocketResponse = await shiprocketService.cancelOrder(order_Id);
             db.Order.destroy({
-                where: { id: Order.id },
-            })
-
-            return db.Cart_Detail.destroy({
-                where: { orderId: Order.id },
-            }).then(
-                res.status(200).json({
+                where: { id: order.id },
+            });
+            const result = await db.Cart_Detail.destroy({
+                where: { orderId: order.id },
+            });
+            if (result) {
+                return res.status(200).json({
                     success: true,
                     message: "Successfully canceled order list",
-                    shiprocketResponse,
-                })
-            )
-        }
-        catch (err) {
+                });
+            } else {
+                return res.status(500).json({
+                    'errors': "Failed to delete cart details",
+                });
+            }
+        } catch (err) {
             res.status(500).json({ 'errors': "" + err });
         }
     },

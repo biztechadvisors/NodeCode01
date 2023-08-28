@@ -672,10 +672,13 @@ module.exports = {
         return res.status(response.code).json(response);
       } else {
         // Custom response object/function
-        const response = {
-          code: 200,
-          data: { message: "No data found" },
-        };
+        const response = Util.getFormatedResponse(false, {
+          count: 0,
+          pages: 0,
+          items: [],
+        }, {
+          message: 'products not found',
+        });
         return res.status(response.code).json(response);
       }
     } catch (err) {

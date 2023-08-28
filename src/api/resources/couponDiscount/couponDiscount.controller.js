@@ -67,7 +67,7 @@ const generateCouponCode = () => {
 
 
 module.exports = {
-    
+
     async CouponDiscCreate(req, res, next) {
         try {
             // console.log("first", req.body);
@@ -400,6 +400,7 @@ module.exports = {
             let discountedPrice = grandTotal;
             if (coupon.discountType === 'totalAmount' && grandTotal >= coupon.onShopping) {
                 discountedPrice -= coupon.discount;
+                return res.status(200).json({ grandTotal: discountedPrice, onShopping: coupon.onShopping, discount: coupon.discount });
             } else if (coupon.discountType === 'particularProduct') {
                 const couponItems = coupon.couponItems;
                 // Use the alias to access the associated items
@@ -426,9 +427,11 @@ module.exports = {
                     totalAmount += actualPrice;
                 }
                 discountedPrice = totalAmount - productDiscount;
+
+                return res.status(200).json({ grandTotal: discountedPrice });
             }
             // Apply additional conditions
-            return res.status(200).json({ grandTotal: discountedPrice });
+            return res.status(400).json({ error: 'Coupon Discount Valid on orders above Rs 5000' });
         } catch (error) {
             console.error('Error applying coupon code:', error);
             return res.status(500).json({ error: 'Internal server error' });

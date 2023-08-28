@@ -225,6 +225,9 @@ module.exports = {
       httpOnly: true,
       secure: process.env.APP_SECURE,
     });
+
+    // const user = db.user.findOne({ where: { email: req.body.email } })
+
     return res.status(200).json({ success: true, token, role: req.user.role });
   },
 
