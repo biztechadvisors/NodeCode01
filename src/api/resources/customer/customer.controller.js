@@ -52,6 +52,7 @@ module.exports = {
       email,
       address,
       password,
+      isGoogleAuth
       // role,
     } = req.body;
     let passwordHash = bcrypt.hashSync(password);
@@ -83,13 +84,13 @@ module.exports = {
             // role: role ? role : null,
             address: address ? address : null,
             password: passwordHash,
-            verf_key: otp,
+            verf_key: otp ? otp : null,
           });
         })
         .then((user) => {
           if (user) {
             try {
-              return mailer.sendOtp(email, key, otp);
+              if (!isGoogleAuth) return mailer.sendOtp(email, key, otp);
             } catch (error) {
               next(error);
             }

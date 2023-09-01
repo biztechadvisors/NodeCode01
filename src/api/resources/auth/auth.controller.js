@@ -218,6 +218,8 @@ module.exports = {
   },
 
   async login(req, res, next) {
+    const user = await db.user.findOne({ where: { email: req.body.email } });
+
     var date = new Date();
     var token = JWTSign(req.user, date);
     res.cookie("XSRF-token", token, {
@@ -226,9 +228,7 @@ module.exports = {
       secure: process.env.APP_SECURE,
     });
 
-    // const user = db.user.findOne({ where: { email: req.body.email } })
-
-    return res.status(200).json({ success: true, token, role: req.user.role });
+    return res.status(200).json({ success: true, token, role: req.user.role, custId: user.id });
   },
 
   async sellerLogin(req, res, next) {
@@ -242,6 +242,7 @@ module.exports = {
 
     return res.status(200).json({ success: true, token, role: req.user.role });
   },
+
   async deleteUserList(req, res, next) {
     db.user
       .findOne({ where: { id: req.body.id } })

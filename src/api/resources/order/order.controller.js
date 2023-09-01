@@ -262,8 +262,6 @@ module.exports = {
 
                 const shiprocketResponse = await shiprocketService.createOrder(orderData);
 
-                // console.log("shiprocket Data")
-
                 const order_id = shiprocketResponse.order_id; // Extract the order_id from the Shiprocket response
                 const shipment_id = shiprocketResponse.shipment_id;
                 let address;
@@ -364,7 +362,7 @@ module.exports = {
                                 include: [
                                     {
                                         model: db.product,
-                                        attributes: ["id"],
+                                        attributes: ["id","photo"],
                                         include: [
                                             {
                                                 model: db.user,
