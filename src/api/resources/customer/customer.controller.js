@@ -58,9 +58,16 @@ module.exports = {
 
     let passwordHash;
 
-    if (password) passwordHash = bcrypt.hashSync(password);
+    if (password && !isGoogleAuth) {
+      passwordHash = bcrypt.hashSync(password);
+    }
+    
     let key = Math.random().toString(36).slice(2);
-    let otp = generateOtp();
+    let otp;
+    
+    if (!isGoogleAuth) {
+      otp = generateOtp();
+    }
     // let token = verifyOtp(otp);
 
     const query = {};
