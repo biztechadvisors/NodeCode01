@@ -55,7 +55,10 @@ module.exports = {
       isGoogleAuth
       // role,
     } = req.body;
-    let passwordHash = bcrypt.hashSync(password);
+
+    let passwordHash;
+
+    if (password) passwordHash = bcrypt.hashSync(password);
     let key = Math.random().toString(36).slice(2);
     let otp = generateOtp();
     // let token = verifyOtp(otp);
@@ -83,7 +86,7 @@ module.exports = {
             phone: phone,
             // role: role ? role : null,
             address: address ? address : null,
-            password: passwordHash,
+            password: passwordHash ? passwordHash : null,
             verf_key: otp ? otp : null,
           });
         })
