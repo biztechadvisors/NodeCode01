@@ -61,14 +61,13 @@ module.exports = {
     if (password && !isGoogleAuth) {
       passwordHash = bcrypt.hashSync(password);
     }
-    
+
     let key = Math.random().toString(36).slice(2);
     let otp;
-    
+
     if (!isGoogleAuth) {
       otp = generateOtp();
     }
-    // let token = verifyOtp(otp);
 
     const query = {};
     query.where = {};
@@ -80,10 +79,16 @@ module.exports = {
         .findAll(query)
         .then((find) => {
           if (find && find.length) {
-            throw new RequestError(
-              "Email already registered please use another!",
-              409
-            );
+            if (isGoogleAuth) {
+              return res.status(200).json({
+                message: "User already exists and is using Google Auth",
+              });
+            } else {
+              throw new RequestError(
+                "Email already registered please use another!",
+                409
+              );
+            }
           }
           return db.customer.create({
             firstName: firstName,
@@ -99,10 +104,16 @@ module.exports = {
         })
         .then((user) => {
           if (user) {
-            try {
-              if (!isGoogleAuth) return mailer.sendOtp(email, key, otp);
-            } catch (error) {
-              next(error);
+            if (isGoogleAuth) {
+              return res.status(200).json({
+                message: "User created successfully",
+              });
+            } else {
+              try {
+                return mailer.sendOtp(email, key, otp);
+              } catch (error) {
+                next(error);
+              }
             }
           } else
             res
