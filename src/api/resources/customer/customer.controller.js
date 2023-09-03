@@ -100,6 +100,7 @@ module.exports = {
             address: address ? address : null,
             password: passwordHash ? passwordHash : null,
             verf_key: otp ? otp : null,
+            verify: isGoogleAuth ? 1 : null
           });
         })
         .then((user) => {
