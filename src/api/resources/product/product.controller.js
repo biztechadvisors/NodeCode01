@@ -1,6 +1,6 @@
 const { db } = require('../../../models');
 const { Op } = require('sequelize');
-const queue = require('../../../kue');
+const { queue } = require('../../../kue');
 const config = require('../../../config');
 const AWS = require('aws-sdk');
 const moment = require('moment');
@@ -920,36 +920,34 @@ module.exports = {
       });
   },
 
-  async varientImageUpload(req, res, next) {
+   async varientImageUpload(req, res, next) {
     let attachmentEntries = [];
-    let { productId,
-      // varientId 
-    } = req.body;
+    let { productId } = req.body;
+
     for (var i = 0; i < req.files.length; i++) {
       attachmentEntries.push({
         productId: productId,
-        // varientId: varientId,
         name: req.files[i].filename,
         mime: req.files[i].mimetype,
         imgUrl: req.files[i].location,
       });
     }
+
     db.ProductVariant.findOne({
       where: {
-        // id: varientId, 
-        productId: productId
+        productId: productId,
       },
     })
       .then((r) => {
         if (r) {
-          return queue.create("img-upload", {
-            productId: req.body.productId,
-            // varientId: req.body.varientId,
-            productName: r.item_name,
-            attachmentEntries: attachmentEntries,
-          })
+          return queue
+            .create("img-upload", {
+              productId: req.body.productId,
+              attachmentEntries: attachmentEntries,
+            })
             .save();
         }
+
         throw new RequestError("ProductId is not found");
       })
       .then((r) => {

@@ -1,7 +1,8 @@
-const kue = require("kue");
 const { db } = require("./models");
 const config = require("./config");
 const { Op } = require("sequelize");
+const kue = require('kue');
+const { RequestError } = require('./errors'); // Assuming you have a custom RequestError defined
 
 const queue = kue.createQueue({
   prefix: "q",
@@ -12,7 +13,6 @@ const queue = kue.createQueue({
   },
 });
 
-module.exports = queue;
 
 let getTargetProduct = (targets) => {
   var targetProduct = [];
@@ -25,6 +25,7 @@ let getTargetProduct = (targets) => {
 module.exports = {
   init: () => {
     queue.process("img-upload", function (job, done) {
+      console.log("Upload");
       Promise.all([
         db.productphoto.bulkCreate(job.data.attachmentEntries),
         db.productphoto.destroy({
@@ -117,3 +118,5 @@ module.exports = {
     });
   },
 };
+
+module.exports.queue = queue; 
