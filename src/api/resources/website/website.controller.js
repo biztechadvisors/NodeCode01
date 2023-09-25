@@ -133,7 +133,7 @@ module.exports = {
       const { type } = req.query;
       db.BannerDetail.findAll({
         where: { status: 1, type: type },
-        attributes: ["id", "banner", "slug"],
+        attributes: ["id", "banner", "slug", "heading", "content"],
       }).then((list) => {
         let response = Util.getFormatedResponse(false, list, {
           message: "Success",

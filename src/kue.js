@@ -12,6 +12,8 @@ const queue = kue.createQueue({
   },
 });
 
+module.exports = queue;
+
 let getTargetProduct = (targets) => {
   var targetProduct = [];
   for (var i = 0; targets && i < targets.length; i++) {

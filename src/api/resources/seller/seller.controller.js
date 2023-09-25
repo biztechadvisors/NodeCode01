@@ -1084,7 +1084,7 @@ module.exports = {
       };
     }
 
-    const limit = req.query.limit ? Number(req.query.limit) : 10;
+    const limit = req.query.limit ? Number(req.query.limit) : 20;
     const page = req.query.page ? Number(req.query.page) : 1;
     query.limit = limit;
     query.offset = limit * (page - 1);
@@ -1105,29 +1105,28 @@ module.exports = {
       "HighLightDetail",
     ];
     try {
-      db.product
-        .findAndCountAll({
-          ...query,
-          include: [
-            { model: db.category, as: "maincat", attributes: ["id", "name"] },
-            { model: db.SubCategory, attributes: ["id", "sub_name"] },
-            {
-              model: db.ProductVariant,
-              ...whereCond,
-              include: [
-                {
-                  model: db.ch_color_detail,
-                  as: "color",
-                  attributes: ["id", "TITLE", "CODE"],
-                },
-              ],
-            },
-            { model: db.ch_specification, attributes: ["id", "type", "value"] },
-            {
-              model: db.collection,
-            },
-          ],
-        })
+      await db.product.findAndCountAll({
+        ...query,
+        include: [
+          { model: db.category, as: "maincat", attributes: ["id", "name"] },
+          { model: db.SubCategory, attributes: ["id", "sub_name"] },
+          {
+            model: db.ProductVariant,
+            ...whereCond,
+            include: [
+              {
+                model: db.ch_color_detail,
+                as: "color",
+                attributes: ["id", "TITLE", "CODE"],
+              },
+            ],
+          },
+          { model: db.ch_specification, attributes: ["id", "type", "value"] },
+          {
+            model: db.collection,
+          },
+        ],
+      })
         .then((list) => {
           if (list.count === 0) {
             let response = Util.getFormatedResponse(false, {
@@ -1135,6 +1134,7 @@ module.exports = {
             });
             res.status(response.code).json(response);
           } else {
+            console.log("Count", list.rows.length)
             let pages = Math.ceil(list.count / limit);
             const finalResult = {
               count: list.count,
@@ -1157,9 +1157,9 @@ module.exports = {
       next(err);
     }
   },
+
   async CommonName(req, res, next) {
     const { id, name, slug } = req.body;
-
     try {
       db.product
         .findOne({

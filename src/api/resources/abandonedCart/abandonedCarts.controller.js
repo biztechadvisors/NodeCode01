@@ -427,6 +427,24 @@ async function clearCart(req, res, next) {
   }
 }
 
+async function clearWishlist(req, res, next) {
+  try {
+    const updatedRows = await db.wishlist.update(
+      { cart_data: "{}", cart_quantity: null },
+      { where: { email: req.query.email } }
+    );
+
+    if (updatedRows > 0) {
+      return res.status(200).json({ success: true, message: 'WishList cleared successfully' });
+    } else {
+      return res.status(404).json({ success: false, message: 'WishList not found' });
+    }
+  } catch (error) {
+    console.error(error);  // Log the error for debugging purposes
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+}
+
 
 module.exports = {
   abandonedCartInsert,
@@ -438,6 +456,7 @@ module.exports = {
   abandonedWishListInsert,
   getAbandonedWishListCount,
   removeProductFromWishList,
-  sendAbandonedWishListReminder
+  sendAbandonedWishListReminder,
+  clearWishlist
 };
 

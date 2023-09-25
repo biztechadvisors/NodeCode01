@@ -31,4 +31,8 @@ abandonedCartsRouter.route("/clearCart").put(
   abandonedCartsController.clearCart
 );
 
+abandonedCartsRouter.route("/clearWishlist").put(
+  abandonedCartsController.clearWishlist
+);
+
 module.exports = abandonedCartsRouter;

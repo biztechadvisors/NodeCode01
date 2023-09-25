@@ -1,6 +1,6 @@
 const { db } = require('../../../models');
 const { Op } = require('sequelize');
-const { queue } = require('../../../kue');
+const queue = require('../../../kue');
 const config = require('../../../config');
 const AWS = require('aws-sdk');
 const moment = require('moment');
@@ -942,13 +942,12 @@ module.exports = {
     })
       .then((r) => {
         if (r) {
-          return queue
-            .create("img-upload", {
-              productId: req.body.productId,
-              // varientId: req.body.varientId,
-              productName: r.item_name,
-              attachmentEntries: attachmentEntries,
-            })
+          return queue.create("img-upload", {
+            productId: req.body.productId,
+            // varientId: req.body.varientId,
+            productName: r.item_name,
+            attachmentEntries: attachmentEntries,
+          })
             .save();
         }
         throw new RequestError("ProductId is not found");
@@ -1597,7 +1596,8 @@ module.exports = {
 
   async bannerUpload(req, res, next) {
     try {
-      const { id, slug, status, type } = req.body;
+      const { id, slug, status, type, heading, content } = req.body;
+
       db.BannerDetail.findOne({ where: { id: id || null } })
         .then(async (data) => {
           if (data) {
@@ -1605,6 +1605,8 @@ module.exports = {
               {
                 id: id,
                 slug: slug ? slug : data.slug,
+                heading: heading ? heading : data.heading,
+                content: content ? content : data.content,
                 status: status ? status : data.status,
                 banner: req.file ? req.file.location : data.banner,
                 type: type,
@@ -1614,9 +1616,11 @@ module.exports = {
           } else {
             return db.BannerDetail.create({
               slug: slug,
+              heading: heading,
+              content: content,
               status: 0,
               type: type,
-              banner: req.file ? req.file.location : product.photo,
+              banner: req.file ? req.file.location : "",
             });
           }
         })

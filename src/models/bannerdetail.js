@@ -4,6 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     "BannerDetail",
     {
       banner: DataTypes.TEXT,
+      heading: DataTypes.STRING,
+      content: DataTypes.STRING,
       slug: DataTypes.STRING,
       status: DataTypes.BOOLEAN,
       type: {

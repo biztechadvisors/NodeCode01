@@ -362,7 +362,7 @@ module.exports = {
                                 include: [
                                     {
                                         model: db.product,
-                                        attributes: ["id","photo"],
+                                        attributes: ["id", "photo"],
                                         include: [
                                             {
                                                 model: db.user,
@@ -430,11 +430,11 @@ module.exports = {
                     );
                 }
 
-                const pages = Math.ceil(filteredData.length / limit);
+                let pages = Math.ceil(orderList.count / limit);
                 const finalResult = {
-                    count: filteredData.length,
+                    count: orderList.count,
                     pages: pages,
-                    items: filteredData.slice((page - 1) * limit, page * limit)
+                    items: filteredData,
                 };
                 const response = Util.getFormatedResponse(false, finalResult, {
                     message: "Success"
