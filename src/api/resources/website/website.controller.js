@@ -955,42 +955,20 @@ module.exports = {
           [Op.or]: [
             ...searchWords.map((word) => ({
               [Op.or]: [
-                { name: { [Op.like]: `%${word}%` } },
-                { slug: { [Op.like]: `%${word}%` } },
+                { name: { [Op.startsWith]: word } },
+                { slug: { [Op.startsWith]: word } },
+                { '$ProductVariants.slug$': { [Op.startsWith]: word } },
+                { '$ProductVariants.productName$': { [Op.startsWith]: word } },
+                { '$ProductVariants.memory$': { [Op.startsWith]: word } },
+                { '$ProductVariants.netPrice$': { [Op.startsWith]: word } },
+                { '$ProductVariants.actualPrice$': { [Op.startsWith]: word } },
+                { '$ProductVariants.shortDesc$': { [Op.startsWith]: word } },
+                { '$ProductVariants.longDesc$': { [Op.startsWith]: word } },
+                { '$maincat.slug$': { [Op.startsWith]: word } },
+                { '$maincat.name$': { [Op.startsWith]: word } },
+                { '$SubCategory.slug$': { [Op.startsWith]: word } },
+                { '$SubCategory.sub_name$': { [Op.startsWith]: word } },
               ],
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.slug$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.productName$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.memory$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.netPrice$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.actualPrice$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.shortDesc$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$ProductVariants.longDesc$': { [Op.like]: `%${word}%` },
-            })),
-            ...searchWords.map((word) => ({
-              '$maincat.slug$': { [Op.substring]: word },
-            })),
-            ...searchWords.map((word) => ({
-              '$maincat.name$': { [Op.substring]: word },
-            })),
-            ...searchWords.map((word) => ({
-              '$SubCategory.slug$': { [Op.substring]: word },
-            })),
-            ...searchWords.map((word) => ({
-              '$SubCategory.sub_name$': { [Op.substring]: word },
             })),
           ],
         },
@@ -1033,7 +1011,7 @@ module.exports = {
           },
         ],
         order: [['id', 'DESC']],
-      });
+      });      
 
       if (productResults.count > 0) {
         const arrData = [];
