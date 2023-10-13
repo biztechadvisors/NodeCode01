@@ -5,7 +5,6 @@ const upload = require('../../../awsbucket');
 const productRouter = express.Router();
 
 productRouter.route('/add').post(
-
   upload.single('photo'),
   productController.addProduct
 );

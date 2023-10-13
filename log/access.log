@@ -1906,3 +1906,15 @@
 [0mGET /api/website/search/searchProducts?query=boy%20kurta%20set&limit=10&page=1 [32m200[0m 165.363 ms - 6622[0m
 [0mGET /api/website/search/searchProducts?query=boy%20pink%20%20kurta%20set%20&limit=10&page=1 [32m200[0m 625.946 ms - 6840[0m
 [0mGET /api/website/search/searchProducts?query=boy%20pink%20%20kurta&limit=10&page=1 [32m200[0m 503.965 ms - 6840[0m
+[0mOPTIONS /api/order/list [32m204[0m 5.640 ms - 0[0m
+[0mOPTIONS /api/order/count [32m204[0m 1.654 ms - 0[0m
+[0mOPTIONS /api/order/list [32m204[0m 0.862 ms - 0[0m
+[0mPOST /api/order/list [32m200[0m 303.680 ms - 7925[0m
+[0mGET /api/order/count [32m200[0m 182.565 ms - 60[0m
+[0mPOST /api/order/list [32m200[0m 1383.495 ms - 7925[0m
+[0mOPTIONS /api/order/list [32m204[0m 5.612 ms - 0[0m
+[0mOPTIONS /api/order/count [32m204[0m 1.172 ms - 0[0m
+[0mOPTIONS /api/order/list [32m204[0m 0.919 ms - 0[0m
+[0mPOST /api/order/list [32m200[0m 123.948 ms - 7925[0m
+[0mGET /api/order/count [32m200[0m 105.512 ms - 60[0m
+[0mPOST /api/order/list [32m200[0m 153.304 ms - 7925[0m
