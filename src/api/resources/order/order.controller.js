@@ -206,9 +206,9 @@ module.exports = {
             const customer = await db.customer.findOne({ where: { id: req.body.id } });
             console.log("Ram")
 
-            if (!customer) {
-                return res.status(500).json({ errors: ['User is not found'] });
-            }
+            // if (!customer) {
+            //     return res.status(500).json({ errors: ['User is not found'] });
+            // }
             const t = await db.sequelize.transaction();
             try {
                 const orderId = "OD" + Math.floor(Math.random() * Date.now());
@@ -268,7 +268,7 @@ module.exports = {
                 if (deliveryAddress) {
                     address = await db.Address.create({
                         orderId: order_id,
-                        custId: req.body.id,
+                        custId: req.body.id ? req.body.id : null,
                         fullname: deliveryAddress.name2 ? deliveryAddress.name2 : deliveryAddress.name,
                         phone: deliveryAddress.phone2 ? deliveryAddress.phone2 : deliveryAddress.phone,
                         city: deliveryAddress.city2 ? deliveryAddress.city2 : deliveryAddress.city,
@@ -280,8 +280,8 @@ module.exports = {
                 }
                 const order = await db.Order.create({
                     addressId: address ? address.id : parseInt(deliveryId),
-                    custId: customer.id,
-                    number: customer.phone,
+                    custId: customer.id ? customer.id : null,
+                    phone: deliveryAddress.phone2 ? deliveryAddress.phone2 : deliveryAddress.phone,
                     grandtotal: grandTotal,
                     paymentmethod: paymentMethod,
                     shipment_id: shipment_id,
@@ -296,7 +296,7 @@ module.exports = {
                     // console.log("Variant")
                     return {
                         orderId: order.id,
-                        custId: customer.id,
+                        custId: customer.id ? customer.id : null,
                         addressId: address ? address.id : parseInt(deliveryId),
                         productId: product ? product.id : "",
                         varientId: product ? product.variantId : "",
@@ -312,7 +312,7 @@ module.exports = {
 
                 await db.OrderNotification.create({
                     orderId: order.id,
-                    userId: customer.id
+                    userId: customer.id ? customer.id : null
                 }, { transaction: t });
 
                 await mailer.sendInvoiceForCustomerNew(
@@ -320,6 +320,7 @@ module.exports = {
                     address,
                     order_id,
                     customer,
+                    deliveryAddress,
                     { transaction: t }
                 );
 
@@ -872,107 +873,197 @@ module.exports = {
         }
     },
 
-    // async getAllOrderList(req, res, next) {
-    //     try {
-    //         const config = {
-    //             method: 'get',
-    //             maxBodyLength: Infinity,
-    //             url: 'https://apiv2.shiprocket.in/v1/external/orders',
-    //             headers: {
-    //                 'Content-Type': 'application/json',
-    //                 'Authorization': `Bearer ${process.env.SHIPROCKET_TOKEN}`,
-    //             },
-    //         };
+    async getAllOrderGraph(req, res, next) {
+        try {
+            const arrData = [];
+            const query = {
+                where: {},
+                attributes: ["id", "paymentmethod", "number", "grandtotal", "createdAt", "shipment_id", "order_Id"],
+                order: [["createdAt", "DESC"]],
+                include: [
+                    {
+                        model: db.Cart_Detail,
+                        include: [
+                            {
+                                model: db.ProductVariant,
+                                as: "varient",
+                                attributes: [
+                                    "id",
+                                    "productId",
+                                    "productName",
+                                    "thumbnail",
+                                    "actualPrice",
+                                    "discount",
+                                    "netPrice"
+                                ],
+                                include: [
+                                    {
+                                        model: db.product,
+                                        attributes: ["id", "photo"],
+                                        include: [
+                                            {
+                                                model: db.user,
+                                                as: "users",
+                                                attributes: ["id", "firstName", "lastName"]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ],
+                        // Use separate subquery to filter based on status from cart_detail table
+                        where: req.body.status ? { status: req.body.status } : {}
+                    },
+                    { model: db.customer, as: "user", attributes: ["id", "email"] },
+                    { model: db.Address, as: "address" }
+                ]
+            }
 
-    //         const responseData = await axios(config);
-    //         const allOrders = responseData.data.data;
+            const orderList = await db.Order.findAndCountAll(query);
+            if (orderList) {
+                orderList.rows.forEach((value) => {
+                    const dataList = {
+                        id: value.id,
+                        payment: value.paymentmethod,
+                        OrderNo: value.number,
+                        CustomerName: value.address ? value.address.fullname : null,
+                        shipping: value.address ? value.address.shipping : null,
+                        phone: value.address ? value.address.phone : null,
+                        StreetAddress: value.address ? value.address.StreetAddress : null,
+                        email: value.user ? value.user.email : null,
+                        OrderDate: value.createdAt,
+                        Status: value.name,
+                        Total: value.grandtotal,
+                        count: value.Cart_Details.length,
+                        Items: value.Cart_Details,
+                        shipment_id: value.shipment_id,
+                        order_Id: value.order_Id
+                    };
+                    arrData.push(dataList);
+                });
 
-    //         // Filter active orders (excluding canceled)
-    //         const activeOrders = allOrders.filter(order => order.status !== 'CANCELED');
+                const finalResult = {
+                    count: arrData.count,
+                    items: arrData,
+                };
+                const response = Util.getFormatedResponse(false, finalResult, {
+                    message: "Success"
+                });
+                res.status(response.code).json(response);
+            } else {
+                const response = Util.getFormatedResponse(false, {
+                    message: "No data found"
+                });
+                res.status(response.code).json(response);
+            }
+        } catch (err) {
+            res.status(500).json({ errors: "" + err });
+        }
+    },
 
-    //         async function getProduct(productName) {
-    //             const productData = await db.product.findOne({
-    //                 where: { name: productName },
-    //             });
-    //             return productData;
-    //         }
 
-    //         const formattedOrders = await Promise.all(
-    //             activeOrders.map(async (order) => {
-    //                 const formattedProducts = await Promise.all(
-    //                     order.products.map(async (product) => {
-    //                         const productName = product.name;
-    //                         const productData = await getProduct(productName);
-    //                         return {
-    //                             id: product.id,
-    //                             orderId: order.id,
-    //                             addressId: null,
-    //                             productId: productData.product_id,
-    //                             varientId: product.id,
-    //                             qty: product.quantity,
-    //                             status: product.status,
-    //                             deliveryDate: product.delivered_date || null,
-    //                             createdAt: order.created_at,
-    //                             updatedAt: order.updated_at,
-    //                             varient: {
-    //                                 id: product.id,
-    //                                 productId: productData.id,
-    //                                 productName: product.name,
-    //                                 thumbnail: productData.photo,
-    //                                 actualPrice: parseFloat(product.price),
-    //                                 discount: parseFloat(product.discount),
-    //                                 netPrice: parseFloat(product.product_cost),
-    //                                 product: {
-    //                                     id: productData.id,
-    //                                     users: null,
-    //                                 },
-    //                             },
-    //                         };
-    //                     })
-    //                 );
-    //                 return {
-    //                     id: order.id,
-    //                     payment: order.payment_method,
-    //                     OrderNo: order.channel_order_id,
-    //                     CustomerName: order.customer_name,
-    //                     shipping: order.customer_address_2,
-    //                     phone: order.customer_phone,
-    //                     StreetAddress: order.customer_address,
-    //                     city: order.customer_city,
-    //                     state: order.customer_state,
-    //                     pincode: order.customer_pincode,
-    //                     country: order.customer_country,
-    //                     email: order.customer_email,
-    //                     OrderDate: order.created_at,
-    //                     Total: parseFloat(order.total),
-    //                     count: order.products.length,
-    //                     Items: formattedProducts,
-    //                     shipment_id: order.shipments[0].id,
-    //                     order_Id: order.id,
-    //                 };
-    //             })
-    //         );
-
-    //         // Pagination
-    //         const limit = 10;
-    //         const page = 1;
-    //         const startIndex = (page - 1) * limit;
-    //         const endIndex = startIndex + limit;
-    //         const paginatedData = formattedOrders.slice(startIndex, endIndex);
-    //         const finalResult = {
-    //             count: formattedOrders.length,
-    //             pages: Math.ceil(formattedOrders.length / limit),
-    //             items: paginatedData,
-    //         };
-
-    //         const response = Util.getFormatedResponse(false, finalResult, {
-    //             message: 'Success',
-    //         });
-    //         res.status(response.code).json(response);
-    //     } catch (err) {
-    //         console.error(err);
-    //         res.status(500).json({ errors: "An error occurred" });
-    //     }
-    // }
-
+    
 }
+
+// async getAllOrderList(req, res, next) {
+//     try {
+//         const config = {
+//             method: 'get',
+//             maxBodyLength: Infinity,
+//             url: 'https://apiv2.shiprocket.in/v1/external/orders',
+//             headers: {
+//                 'Content-Type': 'application/json',
+//                 'Authorization': `Bearer ${process.env.SHIPROCKET_TOKEN}`,
+//             },
+//         };
+
+//         const responseData = await axios(config);
+//         const allOrders = responseData.data.data;
+
+//         // Filter active orders (excluding canceled)
+//         const activeOrders = allOrders.filter(order => order.status !== 'CANCELED');
+
+//         async function getProduct(productName) {
+//             const productData = await db.product.findOne({
+//                 where: { name: productName },
+//             });
+//             return productData;
+//         }
+
+//         const formattedOrders = await Promise.all(
+//             activeOrders.map(async (order) => {
+//                 const formattedProducts = await Promise.all(
+//                     order.products.map(async (product) => {
+//                         const productName = product.name;
+//                         const productData = await getProduct(productName);
+//                         return {
+//                             id: product.id,
+//                             orderId: order.id,
+//                             addressId: null,
+//                             productId: productData.product_id,
+//                             varientId: product.id,
+//                             qty: product.quantity,
+//                             status: product.status,
+//                             deliveryDate: product.delivered_date || null,
+//                             createdAt: order.created_at,
+//                             updatedAt: order.updated_at,
+//                             varient: {
+//                                 id: product.id,
+//                                 productId: productData.id,
+//                                 productName: product.name,
+//                                 thumbnail: productData.photo,
+//                                 actualPrice: parseFloat(product.price),
+//                                 discount: parseFloat(product.discount),
+//                                 netPrice: parseFloat(product.product_cost),
+//                                 product: {
+//                                     id: productData.id,
+//                                     users: null,
+//                                 },
+//                             },
+//                         };
+//                     })
+//                 );
+//                 return {
+//                     id: order.id,
+//                     payment: order.payment_method,
+//                     OrderNo: order.channel_order_id,
+//                     CustomerName: order.customer_name,
+//                     shipping: order.customer_address_2,
+//                     phone: order.customer_phone,
+//                     StreetAddress: order.customer_address,
+//                     city: order.customer_city,
+//                     state: order.customer_state,
+//                     pincode: order.customer_pincode,
+//                     country: order.customer_country,
+//                     email: order.customer_email,
+//                     OrderDate: order.created_at,
+//                     Total: parseFloat(order.total),
+//                     count: order.products.length,
+//                     Items: formattedProducts,
+//                     shipment_id: order.shipments[0].id,
+//                     order_Id: order.id,
+//                 };
+//             })
+//         );
+
+//         // Pagination
+//         const limit = 10;
+//         const page = 1;
+//         const startIndex = (page - 1) * limit;
+//         const endIndex = startIndex + limit;
+//         const paginatedData = formattedOrders.slice(startIndex, endIndex);
+//         const finalResult = {
+//             count: formattedOrders.length,
+//             pages: Math.ceil(formattedOrders.length / limit),
+//             items: paginatedData,
+//         };
+
+//         const response = Util.getFormatedResponse(false, finalResult, {
+//             message: 'Success',
+//         });
+//         res.status(response.code).json(response);
+//     } catch (err) {
+//         console.error(err);
+//         res.status(500).json({ errors: "An error occurred" });
+//     }
+// }

@@ -55,4 +55,6 @@ orderRouter.route('/cancel-by-product').post( orderController.getOrderCancel);
 // Get return orders route
 orderRouter.route('/getReturn-allOrder').post( orderController.getreturnAllOrder);
 
+orderRouter.route('/OrderMatrix').post(orderController.getAllOrderGraph)
+
 module.exports = orderRouter;
