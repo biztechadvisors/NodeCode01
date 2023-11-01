@@ -1978,3 +1978,7 @@
 [0mOPTIONS /api/website/collection/list [32m204[0m 0.904 ms - 0[0m
 [0mGET /api/category/admin/main-list [32m200[0m 36.769 ms - 543[0m
 [0mPOST /api/website/collection/list [32m200[0m 38.386 ms - 9345[0m
+[0mGET /api/website/catalog/product/search?page=1&limit=20&filter_memory=2-3yr [32m200[0m 210.099 ms - 79[0m
+[0mGET /api/website/catalog/product/search?page=2&limit=20&filter_memory=2-3yr [32m200[0m 47.343 ms - 79[0m
+[0mGET /api/website/catalog/product/search?page=1&limit=20&filter_memory=2-3yr [32m200[0m 45.130 ms - 79[0m
+[0mGET /api/website/catalog/product/search?page=1&limit=20&filter_memory=2%20to%203%20Yrs [32m200[0m 274.995 ms - 8625[0m
