@@ -1982,3 +1982,15 @@
 [0mGET /api/website/catalog/product/search?page=2&limit=20&filter_memory=2-3yr [32m200[0m 47.343 ms - 79[0m
 [0mGET /api/website/catalog/product/search?page=1&limit=20&filter_memory=2-3yr [32m200[0m 45.130 ms - 79[0m
 [0mGET /api/website/catalog/product/search?page=1&limit=20&filter_memory=2%20to%203%20Yrs [32m200[0m 274.995 ms - 8625[0m
+[0mOPTIONS /api/order/list [32m204[0m 7.497 ms - 0[0m
+[0mOPTIONS /api/order/count [32m204[0m 1.438 ms - 0[0m
+[0mOPTIONS /api/order/totalDash-list [32m204[0m 0.924 ms - 0[0m
+[0mOPTIONS /api/order/OrderMatrix [32m204[0m 0.886 ms - 0[0m
+[0mGET /api/order/count [32m200[0m 151.635 ms - 60[0m
+[0mGET /api/order/totalDash-list [32m200[0m 151.150 ms - 84[0m
+[0mPOST /api/order/list [32m200[0m 294.798 ms - 8883[0m
+[0mPOST /api/order/OrderMatrix [32m200[0m 194.639 ms - 22372[0m
+[0mPOST /api/order/create [32m200[0m 1903.822 ms - 200[0m
+[0mPOST /api/order/create [32m200[0m 1582.838 ms - 200[0m
+[0mPOST /api/order/create [32m200[0m 1759.684 ms - 200[0m
+[0mPOST /api/order/create [32m200[0m 1548.714 ms - 200[0m

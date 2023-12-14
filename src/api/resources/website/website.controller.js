@@ -225,6 +225,7 @@ module.exports = {
             desc: value.desc,
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
+            Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             badges: 'new',
             colorIds: Array.from(variantColors),
           };
@@ -1011,7 +1012,7 @@ module.exports = {
           },
         ],
         order: [['id', 'DESC']],
-      });      
+      });
 
       if (productResults.count > 0) {
         const arrData = [];

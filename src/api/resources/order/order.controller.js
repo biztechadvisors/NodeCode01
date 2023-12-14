@@ -340,6 +340,7 @@ module.exports = {
             next(err); // Pass the error to the error handler middleware
         }
     },
+    
     async getAllOrderList(req, res, next) {
         try {
             const arrData = [];

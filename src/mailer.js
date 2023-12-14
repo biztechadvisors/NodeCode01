@@ -369,7 +369,7 @@ module.exports = {
       <table style="min-width:650px;margin:50px auto 10px;background-color:#fff;padding:50px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24);-moz-box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24);box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24); border-top: solid 10px #88b433;">
         <thead>
           <tr>
-            <th style="text-align:left;"><img style="max-width: 80px;height:70px" src="https://nino-orpin.vercel.app/" width='80' alt="codenox"></th>
+            <th style="text-align:left;"><img style="max-width: 80px;height:70px" src="https://www.ninobyvani.com/assets/imgs/theme/logo.png" width='80' alt="codenox"></th>
             <th style="text-align:right;font-weight:bold;font-size: 14px;">${new Date().toISOString().slice(0, 10)}</th>
           </tr>
         </thead>
@@ -389,7 +389,7 @@ module.exports = {
             <td colspan="2" style="border: solid 1px #ddd; padding:10px 20px;">
               <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:150px">Order status</span><b style="color:green;font-weight:normal;margin:0">Success</b></p>
               <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Order ID</span> ${order_id}</p>
-              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Order ID</span> ${shipment_id}</p>
+              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping ID</span> ${shipment_id}</p>
               <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display-inline-block;min-width:146px">Order amount</span> Rs. ${body.grandTotal}</p>
               <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Phone No</span> ${address ? address.phone : body.deliveryAddress.phone}</p>
               <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping Address</span>${address.shipping + ", " + address.city + ", " + address.states}</p>
@@ -427,16 +427,13 @@ module.exports = {
       <td style="height:50px;"></td>
     </tr>
     <tr>
-    <p style="font-size:14px;margin:0 0 6px 0;">If you use a mobile device, you can receive notifications about the delivery of your package and track it from our free <a href="#">Amazon app</a>.</p>
-      <td colspan="2" style="font-size:14px;padding:2px;">
+    <td colspan="5" style="font-size:14px;padding:5px;">
+    <p style="font-size:14px;margin:0 0 6px 0;">If you use a mobile device, you can receive notifications about the delivery of your package and track it from our free <a href="#">ninobyvani.com</a>.</p>
         <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team codenox<br><br>
-        For any queries please contact us at: <b>codenox.advisor@gmail.com</b>
+        For any queries please contact us at: <b>ninobyvani@gmail.com</b>
       </td>
     </tr>
-  </tfooter>
-  </table>
-  </body>
-  </html>`;
+  </tfooter>`;
     const totalHtml = htmlHeader + htmlFooter;
     return new Promise((resolve, reject) => {
       try {
