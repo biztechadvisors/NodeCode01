@@ -264,6 +264,8 @@ module.exports = {
 
                 const shiprocketResponse = await shiprocketService.createOrder(orderData);
 
+                console.log("shiprocketResponse*", shiprocketResponse)
+
                 const order_id = shiprocketResponse.order_id; // Extract the order_id from the Shiprocket response
                 const shipment_id = shiprocketResponse.shipment_id;
 
@@ -340,7 +342,7 @@ module.exports = {
             next(err); // Pass the error to the error handler middleware
         }
     },
-    
+
     async getAllOrderList(req, res, next) {
         try {
             const arrData = [];
@@ -488,7 +490,7 @@ module.exports = {
                     {
                         model: db.Cart_Detail, attributes: ["id", "qty", "status", "deliveryDate"],
                         include: [
-                            { model: db.product, as: "product", attributes: ["id", "name"] },
+                            { model: db.product, as: "product", attributes: ["id", "name", "photo"] },
                             { model: db.ProductVariant, as: "varient" },
                             { model: db.productphoto, as: "thumbnail", attributes: ["productId", "imgUrl"] },
                         ]

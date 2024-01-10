@@ -598,6 +598,9 @@ module.exports = {
               "memory",
               "colorId",
               "productCode",
+              "shortDesc",
+              "longDesc",
+              "Available",
             ],
             include: [
               {
@@ -650,10 +653,12 @@ module.exports = {
             netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
             discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-            desc: value.desc,
+            shortDesc: value.ProductVariants[0].shortDesc,
+            longDesc: value.ProductVariants[0].longDesc,
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
+            Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             colorIds: Array.from(variantColors),
           };
           arrData.push(dataList);
@@ -1559,6 +1564,7 @@ module.exports = {
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
+            Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             colorIds: Array.from(variantColors),
           };
           arrData.push(dataList);
