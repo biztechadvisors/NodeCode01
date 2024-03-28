@@ -28,9 +28,10 @@ const shiprocketService = {
                     'Authorization': `Bearer ${process.env.SHIPROCKET_TOKEN}`,
                 },
             });
-
+            console.log('response***', response)
             return response.data;
         } catch (error) {
+            console.log('error:***************', error)
             throw new Error('Error creating Shiprocket order', error);
         }
     },

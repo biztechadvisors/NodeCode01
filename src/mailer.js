@@ -12,12 +12,12 @@ module.exports = {
             var smtpTransport = nodemailer.createTransport({
               host: process.env.MAIL_HOST,
               port: process.env.MAIL_PORT,
-              secure: false,
+              secure: true,
               auth: {
                 user: process.env.MAIL_USERNAME,
                 pass: process.env.MAIL_PASSWORD,
               },
-              tls: { rejectUnauthorized: false },
+              //tls: { rejectUnauthorized: false },
             });
             smtpTransport.sendMail(
               {
@@ -59,12 +59,12 @@ module.exports = {
             var smtpTransport = nodemailer.createTransport({
               host: process.env.MAIL_HOST,
               port: process.env.MAIL_PORT,
-              secure: false,
+              secure: true,
               auth: {
                 user: process.env.MAIL_USERNAME,
                 pass: process.env.MAIL_PASSWORD,
               },
-              tls: { rejectUnauthorized: false },
+              //tls: { rejectUnauthorized: false },
             });
             smtpTransport.sendMail(
               {
@@ -106,13 +106,13 @@ module.exports = {
     var smtpTransport = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
-      ignoreTLS: false,
-      secure: false,
+      // ignoreTLS: false,
+      secure: true,
       auth: {
         user: process.env.MAIL_USERNAME,
         pass: process.env.MAIL_PASSWORD,
       },
-      tls: { rejectUnauthorized: false },
+      //tls: { rejectUnauthorized: false },
     });
     smtpTransport.sendMail(
       {
@@ -143,12 +143,12 @@ module.exports = {
             var smtpTransport = nodemailer.createTransport({
               host: process.env.MAIL_HOST,
               port: process.env.MAIL_PORT,
-              secure: false,
+              secure: true,
               auth: {
                 user: process.env.MAIL_USERNAME,
                 pass: process.env.MAIL_PASSWORD,
               },
-              tls: { rejectUnauthorized: false },
+              //tls: { rejectUnauthorized: false },
             });
 
             var encryptEmail = CryptoJS.AES.encrypt(email, 'TEDbuddyIndsFia').toString();
@@ -325,13 +325,13 @@ module.exports = {
                 var smtpTransport = nodemailer.createTransport({
                   host: process.env.MAIL_HOST,
                   port: process.env.MAIL_PORT,
-                  ignoreTLS: false,
-                  secure: false,
+                  // ignoreTLS: false,
+                  secure: true,
                   auth: {
                     user: process.env.MAIL_USERNAME,
                     pass: process.env.MAIL_PASSWORD,
                   },
-                  tls: { rejectUnauthorized: false },
+                  //tls: { rejectUnauthorized: false },
                 });
                 smtpTransport.sendMail(
                   {
@@ -446,13 +446,13 @@ module.exports = {
         var smtpTransport = nodemailer.createTransport({
           host: process.env.MAIL_HOST,
           port: process.env.MAIL_PORT,
-          ignoreTLS: false,
-          secure: false,
+          // ignoreTLS: false,
+          secure: true,
           auth: {
             user: process.env.MAIL_USERNAME,
             pass: process.env.MAIL_PASSWORD,
           },
-          tls: { rejectUnauthorized: false },
+          //tls: { rejectUnauthorized: false },
         });
         smtpTransport.sendMail(
           {
@@ -586,13 +586,13 @@ module.exports = {
             const smtpTransport = nodemailer.createTransport({
               host: process.env.MAIL_HOST,
               port: process.env.MAIL_PORT,
-              ignoreTLS: false,
-              secure: false,
+              // ignoreTLS: false,
+              secure: true,
               auth: {
                 user: process.env.MAIL_USERNAME,
                 pass: process.env.MAIL_PASSWORD,
               },
-              tls: { rejectUnauthorized: false },
+              //tls: { rejectUnauthorized: false },
             });
             smtpTransport.sendMail(
               {
@@ -662,13 +662,13 @@ module.exports = {
     const smtpTransport = nodemailer.createTransport({
       host: process.env.MAIL_HOST,
       port: process.env.MAIL_PORT,
-      ignoreTLS: false,
-      secure: false,
+      // ignoreTLS: false,
+      secure: true,
       auth: {
         user: process.env.MAIL_USERNAME,
         pass: process.env.MAIL_PASSWORD,
       },
-      tls: { rejectUnauthorized: false },
+      //tls: { rejectUnauthorized: false },
     });
     return new Promise((resolve, reject) => {
       smtpTransport.sendMail(

@@ -247,10 +247,10 @@ module.exports = {
                         units: product.quantity,
                         selling_price: product.netPrice,
                         discount: product.discount ? product.discount : product.discountPer,
-                        tax: product.tax ? product.tax : "",
+                        tax: product.tax ? product.tax : "0.00",
                         hsn: ""
                     })),
-                    payment_method: paymentMethod,
+                    payment_method: paymentMethod ? paymentMethod : "postpaid",
                     shipping_charges: shipping_charges ? shipping_charges : 0,
                     giftwrap_charges: 0,
                     transaction_charges: 0,
@@ -261,6 +261,7 @@ module.exports = {
                     height: req.body.height,
                     weight: req.body.weight
                 };
+                console.log('orderData: ', orderData)
 
                 const shiprocketResponse = await shiprocketService.createOrder(orderData);
 
