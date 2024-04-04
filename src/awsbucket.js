@@ -3,7 +3,6 @@ const multer = require("multer");
 const AWS = require("aws-sdk");
 const multerS3 = require("multer-s3");
 
-
 AWS.config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY,
@@ -19,6 +18,8 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
+const maxSize = 30 * 1024 * 1024; // 30MB
+
 const upload = multer({
   storage: multerS3({
     fileFilter,
@@ -31,6 +32,7 @@ const upload = multer({
       cb(null, file.originalname);
     },
   }),
+  limits: { fileSize: maxSize } // Set the maximum file size
 });
 
 module.exports = upload;

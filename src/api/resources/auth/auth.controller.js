@@ -114,8 +114,43 @@ module.exports = {
       console.error(err);
       next(err);
     }
-  }
-  ,
+  },
+
+  async successfullyRegister(req, res) {
+    try {
+      const user = await db.customer.findOne({ where: { email: req.body.email } });
+
+      if (user) {
+        const smtpTransport = nodemailer.createTransport({
+          host: process.env.MAIL_HOST,
+          port: process.env.MAIL_PORT,
+          secure: true,
+          auth: {
+            user: process.env.MAIL_USERNAME,
+            pass: process.env.MAIL_PASSWORD,
+          },
+        });
+        await smtpTransport.sendMail({
+          from: process.env.MAIL_FROM,
+          to: req.body.email,
+          subject: "Registration Successful",
+          html: "Dear user,<br><br> Congratulations! Your registration with Nino has been successfully completed.<br><br>Thank you for choosing Nino. Enjoy shopping with us!<br><br>This is a system-generated email. Please do not reply to this email ID.<br><br>Warm Regards,<br>Customer Care<br>Nino",
+        });
+        return true; // Email sent successfully
+      } else {
+        throw {
+          name: "NinoByVaniException",
+          msg: "User not found",
+        };
+      }
+    } catch (error) {
+      throw {
+        name: "NinoByVaniException",
+        message: "Email Sending Failed",
+        error: error,
+      };
+    }
+  },
 
   async findUser(req, res, next) {
     db.user

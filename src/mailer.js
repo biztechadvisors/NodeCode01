@@ -4,6 +4,87 @@ const { db } = require("./models");
 const CryptoJS = require("crypto-js");
 
 module.exports = {
+  sendOrderTrackingEmail: async (customerEmail, htmlContent) => {
+    try {
+      const smtpTransport = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
+        secure: true,
+        auth: {
+          user: process.env.MAIL_USERNAME,
+          pass: process.env.MAIL_PASSWORD,
+        },
+      });
+
+      await smtpTransport.sendMail({
+        from: process.env.MAIL_FROM,
+        to: customerEmail,
+        subject: "Your Order Tracking Information",
+        html: htmlContent,
+        headers: {
+          'X-Mailer': 'MyApp Mailer',
+          'List-Unsubscribe': '<unsubscribe@example.com>',
+          'Precedence': 'bulk',
+          'X-Auto-Response-Suppress': 'All',
+        }
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error sending order tracking email:', error);
+      throw new Error('Error sending order tracking email');
+    }
+  },
+
+  orderDelivered: (customerEmail) => {
+    const htmlContent = `
+    <html>
+    <body>
+      <p>Your order has been successfully delivered to your address.</p>
+      <p>If you have any questions or concerns, feel free to contact us at ninobyvani@gmail.com.</p>
+      <p>Thank you for shopping with us!</p>
+    </body>
+    </html>`;
+    return new Promise((resolve, reject) => {
+      try {
+        const smtpTransport = nodemailer.createTransport({
+          host: process.env.MAIL_HOST,
+          port: process.env.MAIL_PORT,
+          secure: true,
+          auth: {
+            user: process.env.MAIL_USERNAME,
+            pass: process.env.MAIL_PASSWORD,
+          },
+        });
+        smtpTransport.sendMail({
+          from: process.env.MAIL_FROM,
+          to: customerEmail,
+          subject: "Your Order Has Been Delivered",
+          html: htmlContent,
+          // Add additional email headers for authentication and deliverability
+          headers: {
+            'X-Mailer': 'MyApp Mailer', // Set a custom mailer header
+            'List-Unsubscribe': '<unsubscribe@example.com>', // Provide an unsubscribe option
+            'Precedence': 'bulk', // Indicate that it's a bulk email
+            'X-Auto-Response-Suppress': 'All', // Suppress auto-responses
+          }
+        }, function (error, info) {
+          if (error) {
+            reject({
+              name: "Exception",
+              msg: "Email Sending Failed",
+              error: error,
+            });
+          } else {
+            resolve(true);
+          }
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  },
+
   sendOtp: (email, key, otp) => {
     return new Promise((resolve, reject) => {
       try {
@@ -364,64 +445,205 @@ module.exports = {
   },
 
   sendInvoiceForCustomerNew: (body, address, order_id, shipment_id, customer, deliveryAddress) => {
-    const htmlHeader = `<html>
-    <body style="background-color:#fbfbfb;font-family: Open Sans, sans-serif;font-size:100%;font-weight:400;line-height:1.4;color:#000;">
-      <table style="min-width:650px;margin:50px auto 10px;background-color:#fff;padding:50px;-webkit-border-radius:3px;-moz-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24);-moz-box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24);box-shadow:0 1px 3px rgba(0,0,0,.12),0 1px 2px rgba(0,0,0,.24); border-top: solid 10px #88b433;">
-        <thead>
-          <tr>
-            <th style="text-align:left;"><img style="max-width: 80px;height:70px" src="https://www.ninobyvani.com/assets/imgs/theme/logo.png" width='80' alt="codenox"></th>
-            <th style="text-align:right;font-weight:bold;font-size: 14px;">${new Date().toISOString().slice(0, 10)}</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td style="height:35px;"></td>
-          </tr>
-          <tr>
-            <td style="width:50%;padding:2px;vertical-align:top">
-              <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span style="display:block;font-weight:bold;font-size:14px">Name</span> ${address.fullname}</p>
-            </td>
-            <td style="width:50%;padding:2px;vertical-align:top">
-              <p style="margin:0 0 10px 0;padding:0;font-size:14px;"><span style="display:block;font-weight:bold;font-size:14px;">Email</span> ${customer ? customer.email : deliveryAddress.email}</p>
-            </td>
-          </tr>
-          <tr>
-            <td colspan="2" style="border: solid 1px #ddd; padding:10px 20px;">
-              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:150px">Order status</span><b style="color:green;font-weight:normal;margin:0">Success</b></p>
-              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Order ID</span> ${order_id}</p>
-              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping ID</span> ${shipment_id}</p>
-              <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display-inline-block;min-width:146px">Order amount</span> Rs. ${body.grandTotal}</p>
-              <p style="font-size:14px;margin:0 0 6px 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Phone No</span> ${address ? address.phone : body.deliveryAddress.phone}</p>
-              <p style="font-size:14px;margin:0 0 0 0;"><span style="font-weight:bold;display:inline-block;min-width:146px">Shipping Address</span>${address.shipping + ", " + address.city + ", " + address.states}</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="height:20px;"></td>
-          </tr>
-          <tr>
-            <td colspan="2" style="font-size:14px;padding:2px;font-weight: bold;">Items</td>
-          </tr>
-          ${body.product.map(function (item) {
+    // Your existing code here...
+    const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+    const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+    const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+    const thousands = ['', 'Thousand', 'Million', 'Billion'];
+
+    // Define the convertNumberToWords function
+    function convertNumberToWords(number) {
+      if (number === 0) return 'Zero';
+
+      let words = '';
+      for (let i = 0; number > 0; i++) {
+        if (number % 1000 !== 0) {
+          words = convertHundreds(number % 1000) + thousands[i] + ' ' + words;
+        }
+        number = Math.floor(number / 1000);
+      }
+      return words.trim();
+    }
+
+    function convertHundreds(number) {
+      if (number > 99) {
+        return units[Math.floor(number / 100)] + ' Hundred ' + convertTens(number % 100);
+      } else {
+        return convertTens(number);
+      }
+    }
+
+    function convertTens(number) {
+      if (number < 10) {
+        return units[number];
+      } else if (number >= 10 && number < 20) {
+        return teens[number - 10];
+      } else {
+        return tens[Math.floor(number / 10)] + ' ' + units[number % 10];
+      }
+    };
+
+    // Calculate grand total
+    const grandTotal = `${body.grandTotal}`;
+
+    const grandTotalInWords = convertNumberToWords(grandTotal);
+
+
+    // Create a PDF document
+    const doc = new PDFDocument({ margin: 50 });
+
+    // Pipe the PDF content to a file stream
+    const pdfPath = 'invoice.pdf';
+    const pdfStream = fs.createWriteStream(pdfPath);
+    doc.pipe(pdfStream);
+    const htmlHeader = `<html lang="en">
+
+    <head>
+        <title>Invoice</title>
+    </head>   
+    <body style="background:rgb(254, 252, 252);">
+        <div class="invoice"
+            style=" font-family: Arial, sans-serif; max-width: full ;margin: 20px auto;padding: 20px;border: 1px solid #ddd;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;align-items: center;  ">
+            <div class="invoice-header"
+                style="  display:flex; justify-content: space-between;align-items: center;width: 100%;;">
+  
+                <img style="max-width: 80px;height:70px" src="https://www.ninobyvani.com/assets/imgs/theme/logo.png" width='80' alt="codenox">
+                <h3 style="color:rgb(0, 0, 0);display:block;text-aling:right;margin-left:65%">Tax Invoice/Bill of
+                    Supply/Cash Memo
+                </h3>
+            </div>
+            <div class="invoice-body" style="display:flex;justify-content:space-between;width:100%;">
+                <div style="flex: 0 0 47%;text-align:left;">
+                    <h4 style="text-align:left;">Sold By:</h4>
+                    <p style="text-align: left;">Nino</p>
+                    <p style="text-align:left;">Gali no. 209, </p>
+                    <p style="text-align:left;">
+                    Universital Industrial Estate, Next to Wadia school,
+                    </p>
+                    <p style="text-align:left;">
+                    J.P. Road, Andheri-west, Mumbai- 400058
+                    </p>
+                    <br>
+                    <p style="text-align:left;"><b>PAN No:</b>Hard_Code AC02BFRT56</p>
+                    <p style="text-align:left;"><b>GST Registration No:</b>6723829829</p>
+                    <div class="order-details" style="margin-top: 20px;text-align:left;">
+                        <p style="text-align:left;margin-top:20px"><b>Order Number:</b> </p>
+                        <p style="text-align:left;"><b>Order Date:</b>28/03/2024</p>
+    
+                    </div>
+                </div>
+                <div style="flex: 0 0 50%;text-align:right;text-align:right;">
+                    <div class="buyer" style="margin-top: 20px;text-align:right;">
+                        <h4 style="margin-top: 20px;text-align:right;">Billing Address:</h4>
+                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.id}</p>
+                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.name} ${deliveryAddress.lastName}</p>
+                        <p style="margin-top: 20px;text-align:right;">
+                            ${deliveryAddress.StreetAddress} ${deliveryAddress.ShippingAddress}
+                            ${deliveryAddress.city}</p>
+                        <p style="margin-top: 20px;text-align:right;">
+                            ${deliveryAddress.state} ${deliveryAddress.country}
+                            ${deliveryAddress.pincode}
+                        </p>
+    
+                    </div>
+                    <div class="buyer" style="margin-top: 20px;text-align:right;">
+                        <h4 style="margin-top: 20px;text-align:right;">Shipping Address:</h4>
+                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.name2} ${deliveryAddress.lastName2}</p>
+                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.StreetAddress2} ${deliveryAddress.ShippingAddress2}
+                            ${deliveryAddress.city2}</p>
+                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.state2}
+                            ${deliveryAddress.country2} ${deliveryAddress.pincode2}</p>
+    
+                    </div>
+                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Number:</b>{{created_at}}</p>
+                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Details:</b> (HARD CODE)MP-FIDA-1034-2324</p>
+                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Date:</b>{{invoice_date}}</p>
+                </div>
+            </div>
+            <table
+                style="width: 100%; border-collapse: collapse;margin-bottom: 20px; margin-top: 20px; border: 2px solid black;">
+                <thead style="border:2px solid black">
+                    <tr style="border:2px solid black">
+                        <th style="border: 2px solid black;">SL No.</th>
+                        <th style="border: 2px solid black;">Description</th>
+                        <th style="border: 2px solid black;">Unit Price</th>
+                        <th style="border: 2px solid black;">Quantity</th>
+                        <th style="border: 2px solid black;">Net Amount</th>
+                        <th style="border: 2px solid black;">Tax Rate</th>
+                        <th style="border: 2px solid black;">Tax Amount</th>
+                        <th style="border: 2px solid black;">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                ${body.product.map(function (item) {
+      var amount = item.netPrice - item.discount;
+      var totalPrice = item.selectedVariant.qty * item.netPrice;
+      var rate = (item.discount / amount) * 100
       return `
-              <tr style="border:solid 1px #ddd;">
-                <td style="padding:2px;width:50%;">
-                  <p style="font-size:14px;margin:0;"><img src=${item.thumbnail} alt=${item.Name} height="50px"/></p>
-                </td>
-                <td style="padding:2px;width:50%;">
-                  <p style="font-size:14px;margin:0;">${item.Name}</p>
-                </td>
-                <td style="padding:2px;width:50%;text-align: right;">
-                  <p style="font-size:14px;margin:0;"> Rs.${item.quantity + "*" + item.netPrice + "=" + item.quantity * item.netPrice}</p>
-                </td>
-              </tr>
-            `;
+                  <tr style="border: 2px solid black">
+                        <td style="border: 2px solid black;">${item.selectedVariant.id}</td>
+                        <td style="border: 2px solid black;">${item.Name} </td>
+                        <td style="border: 2px solid black;">${item.netPrice}</td>
+                        <td style="border: 2px solid black;">${item.selectedVariant.qty}</td>
+                        <td style="border: 2px solid black;">${totalPrice}</td>
+                        <td style="border: 2px solid black;">${rate}%</td>
+                       <td style="border: 2px solid black;">${item.discount}</td>
+                        <td style="border: 2px solid black;">${totalPrice}</td>
+                    </tr>`
+        ;
     }).join("")}
-        </tbody>
-      </table>
+                    <tr style="border:2px solid black">
+                        <td colspan="6" style="border: 2px solid black; text-align: left;"><b>TOTAL:</b></td>
+                        <td style="border: 2px solid black;">${body.total_discount}</td>
+                        <td style="border: 2px solid black;">${body.grandTotal}</td>
+                    </tr>
+                    <tr>
+                        <td colspan="9" style="border: 2px solid black; text-align: left;"><b>Amount in Words:</b>
+                           <span style="margin-left:70px;">${grandTotalInWords}</span></td>
+                    </tr>
+                    <tr>
+                        <td colspan="9" style="text-align: right;"><b>Nino</b><br></td>
+                    </tr>
+                    <tr>
+                        <td colspan="9" style="text-align: right;"><b>Authorized Signatory</b></td>
+                    </tr>
+                </tbody>
+            </table>
+            <!-- Payment Details Table -->
+            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; border: 2px solid black;">
+                <tbody>
+                    <tr style="border:2px solid black">
+                        <td style="border:2px solid black">Payment Transaction ID: <br>
+                            <p style="font-size: 12px;">paymentInfo.payment_id</p>
+                        </td>
+                        <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
+                            </p>
+                        </td>
+                        <td rowSpan="2" style="border:2px solid black">Invoice Value:<p style="font-size: 12px;">
+                                ${body.grandTotal} </p>
+                        </td>
+                        <td style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">Gift_Card
+                                paymentMethod</p>
+                        </td>
+                    </tr>
+                    <tr style="border:2px solid black">
+                        <td style="border:2px solid black">Payment Transaction ID: <br>
+                            <p style="font-size: 12px;">paymentInfo.payment_id</p>
+                        </td>
+                        <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
+                            </p>
+                        </td>
+                        <td colspan="2" style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">
+                                ${body.paymentMethod}</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+    
+        </div>
     </body>
-  </html>`;
-
-
+    
+    </html>`;
     const htmlFooter = `<tfooter>
     <tr>
       <td style="height:50px;"></td>
@@ -435,49 +657,59 @@ module.exports = {
     </tr>
   </tfooter>`;
     const totalHtml = htmlHeader + htmlFooter;
+
+    // Define PDF options
+    const pdfOptions = {
+      format: 'Letter',
+      orientation: 'portrait',
+      border: {
+        top: '0.5in',
+        right: '0.5in',
+        bottom: '0.5in',
+        left: '0.5in'
+      },
+    };
+
     return new Promise((resolve, reject) => {
       try {
-        // db.customer.findOne({ where: { email: customer.email } }).then((user) => {
-        //   if (user && user.verify == 1) {
-        //     var key = Math.random().toString(36).slice(2);
-        //     db.customer
-        //       .update({ verf_key: key }, { where: { id: user.id } })
-        //       .then((r) => {
-        var smtpTransport = nodemailer.createTransport({
-          host: process.env.MAIL_HOST,
-          port: process.env.MAIL_PORT,
-          // ignoreTLS: false,
-          secure: true,
-          auth: {
-            user: process.env.MAIL_USERNAME,
-            pass: process.env.MAIL_PASSWORD,
-          },
-          //tls: { rejectUnauthorized: false },
-        });
-        smtpTransport.sendMail(
-          {
-            from: process.env.MAIL_FROM,
-            to: customer ? customer.email : deliveryAddress.email,
-            subject:
-              "Your NinoByWani Order Confirmation. Please share your feedback",
-            html: totalHtml,
-          },
-          function (error, info) {
-            if (error || (info && info.rejected.length)) {
-              return reject({
-                name: "Exception",
-                msg: "Email Sending Failed",
-                error: error,
-              });
-            }
-            return resolve(true);
+        pdf.create(totalHtml, pdfOptions).toBuffer((err, buffer) => {
+          if (err) {
+            reject(err);
+          } else {
+            const attachment = {
+              filename: 'invoice.pdf',
+              content: buffer,
+            };
+
+            const smtpTransport = nodemailer.createTransport({
+              host: process.env.MAIL_HOST,
+              port: process.env.MAIL_PORT,
+              secure: true,
+              auth: {
+                user: process.env.MAIL_USERNAME,
+                pass: process.env.MAIL_PASSWORD,
+              },
+            });
+
+            smtpTransport.sendMail({
+              from: process.env.MAIL_FROM,
+              to: "radhikaji.varfa@outlook.com",
+              subject: "Your NinoByWani Order Confirmation. Please share your feedback",
+              html: 'Please see the attached PDF for your order confirmation.',
+              attachments: [attachment],
+            }, (error, info) => {
+              if (error || (info && info.rejected.length)) {
+                reject({
+                  name: "Exception",
+                  msg: "Email Sending Failed",
+                  error: error,
+                });
+              } else {
+                resolve(true);
+              }
+            });
           }
-        );
-        //       });
-        //   } else {
-        //     reject(new Error("user not valid"));
-        //   }
-        // });
+        });
       } catch (err) {
         reject(err);
       }

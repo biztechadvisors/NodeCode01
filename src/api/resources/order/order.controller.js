@@ -6,6 +6,8 @@ const Util = require("../../../helpers/Util");
 const Sequelize = require("sequelize");
 const { Op } = require("sequelize");
 const axios = require('axios');
+const cron = require('node-cron');
+
 
 const findProductList = (array) => {
     return new Promise((resolve, reject) => {
@@ -52,27 +54,122 @@ const findAddressList = (id) => {
     });
 };
 
+const sendDeliveryMail = async () => {
+    try {
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setHours(0, 0, 0, 0);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+        endOfWeek.setHours(23, 59, 59, 999);
+        const deliveredOrders = await db.Order.findAll({
+            where: {
+                createdAt: {
+                    [Op.between]: [startOfWeek, endOfWeek]
+                },
+                status: 'delieverd'
+            },
+            attributes: ["id", "custId", "number", "grandtotal", "paymentmethod", "grandtotal", "status", "deliverydate", "createdAt", "shipment_id", "order_Id", "totalDiscount", "localDeliveryCharge"]
+            // Include necessary associations if needed
+        });
+        // Filter out orders without custId
+        const ordersWithCustId = deliveredOrders.map(order => order.custId);
+        console.log("custIds**", ordersWithCustId);
+        if (ordersWithCustId.length > 0) {
+            const users = await db.customer.findAll({
+                where: {
+                    id: ordersWithCustId
+                }
+            });
+            // Create a map of users by their id for easier lookup
+            const usersMap = {};
+            users.forEach(user => {
+                usersMap[user.id] = user;
+            });
+            // Combine delivered orders with customer data
+            const combinedData = deliveredOrders.map(order => ({
+                order,
+                customer: usersMap[order.custId]
+            }));
+            combinedData.forEach(async (data) => {
+                if (data.customer && data.customer.email) {
+                    await mailer.orderDelivered(data.customer.email);
+                }
+            });
+            // res.status(200).json(combinedData);
+        }
+    } catch (err) {
+        console.error(err);
+        // res.status(500).json({ error: 'Internal server error' });
+    }
+}
+cron.schedule('0 0 * * *', async () => {
+    try {
+        await sendDeliveryMail();
+    } catch (err) {
+        console.error('Error occurred during scheduled task:', err);
+    }
+});
+
 module.exports = {
     //    shiprocket -------------Start
-    async getOrderTracking(req, res, next) {
+    getOrderTracking: async (req, res, next) => {
         try {
-            const { shipment_id, order_id } = req.query;
+            const { shipment_id } = req.query;
+            console.log("shipment_id", shipment_id)
+            // Assuming db.Orders is your Sequelize model
+            const order = await db.Order.findOne({ where: { shipment_id: Number(shipment_id) } });
+
+            if (!order) {
+                return res.status(400).json({ success: false, message: 'Order not found' });
+            }
+
+            // Assuming db.customer is your Sequelize model for customers
+            const customer = await db.customer.findOne({ where: { id: order.custId } });
+            const customer_email = customer?.dataValues?.email;
+
+            console.log("customer_email", customer_email)
+
+            if (!customer_email) {
+                return res.status(400).json({ success: false, message: 'Missing customer_email' });
+            }
 
             if (shipment_id) {
-                const shiprocketResponse = await shiprocketService.trackOrderByShipment_id(shipment_id);
-                res.status(200).json({ success: true, data: shiprocketResponse });
-            } else if (order_id) {
-                const shiprocketResponse = await shiprocketService.trackOrderByOrderId(order_id);
-                res.status(200).json({ success: true, data: shiprocketResponse });
+                const trackingInfo = await shiprocketService.trackOrderByShipment_id(shipment_id);
+                console.log("trackingInfo", trackingInfo.tracking_data.track_status)
+                if (trackingInfo.tracking_data.track_status != 0) {
+                    const { awb_code } = trackingInfo.tracking_data[0];
+                    const trackingLink = `https://www.shiprocket.in/track/${awb_code}`;
+                }
+
+                let current_status = "processing"
+                let awb_code = "789847232"
+                let trackingLink = "www.google.com"
+
+                const htmlContent = `
+                <html>
+                <body>
+                    <p>Your order with tracking ID ${awb_code} has the following status:</p>
+                    <p>${current_status}</p>
+                    <p>You can track your order <a href="${trackingLink}">here</a>.</p>
+                    <p>If you have any questions or concerns, feel free to contact us at ninobyvani@gmail.com.</p>
+                    <p>Thank you for shopping with us!</p>
+                </body>
+                </html>`;
+
+                await mailer.sendOrderTrackingEmail(customer_email, htmlContent);
+
+                res.status(200).json({ success: true, message: 'Order tracking email sent successfully' });
             } else {
-                res.status(400).json({ success: false, message: 'Missing shipment_id or order_id' });
+                res.status(400).json({ success: false, message: 'Missing shipment_id' });
             }
         } catch (error) {
-            // Handle errors
-            console.error('Error retrieving order tracking:', error);
-            res.status(500).json({ success: false, message: 'Error retrieving order tracking' });
+            console.error('Error retrieving or sending order tracking:', error);
+            res.status(500).json({ success: false, message: 'Error retrieving or sending order tracking' });
         }
     },
+
 
     async calculateShippingCost(req, res) {
         try {
@@ -261,7 +358,6 @@ module.exports = {
                     height: req.body.height,
                     weight: req.body.weight
                 };
-                console.log('orderData: ', orderData)
 
                 const shiprocketResponse = await shiprocketService.createOrder(orderData);
 
@@ -484,7 +580,7 @@ module.exports = {
     async getAllOrderListById(req, res, next) {
         try {
             db.Order.findAll({
-                attributes: ["id", "number", "grandtotal"],
+                attributes: ["id", "number", "grandtotal", "status", "createdAt", "paymentmethod", "deliverydate", "couponCode", "shipment_id"],
                 where: { custId: req.body.id },
                 order: [['createdAt', 'DESC']],
                 include: [
