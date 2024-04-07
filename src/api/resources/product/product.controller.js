@@ -223,7 +223,7 @@ module.exports = {
         productVariants,
         desc,
       } = req.body;
-
+      console.log('Body', req.body)
       const varients = JSON.parse(productVariants);
 
       const product = await db.product.findOne({
@@ -241,7 +241,7 @@ module.exports = {
               slug: slug,
               status: "active",
               SellerId: '1',
-              brandId: brand,
+              brandId: brand ? brand : null,
               desc: desc,
               photo: req.file ? req.file.location : "",
             },
@@ -920,7 +920,7 @@ module.exports = {
       });
   },
 
-   async varientImageUpload(req, res, next) {
+  async varientImageUpload(req, res, next) {
     let attachmentEntries = [];
     let { productId } = req.body;
 

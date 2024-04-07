@@ -1511,6 +1511,11 @@ module.exports = {
         },
         include: [
           {
+            model: db.productphoto,
+            attributes: ['id', 'imgUrl'],
+            order: [['createdAt', 'DESC']],
+          },
+          {
             model: db.ProductVariant,
             include: [
               {
@@ -1528,11 +1533,12 @@ module.exports = {
 
       if (products.count > 0) {
         const arrData = [];
+        let imageList = []
 
         for (const value of products.rows) {
+          imageList = value.productphotos.map((url) => url.imgUrl);
           const variantColors = new Set();
           const variantMemory = new Set();
-
           for (const variant of value.ProductVariants) {
             if (variant.color) {
               variantColors.add(variant.color.TITLE);
@@ -1566,6 +1572,7 @@ module.exports = {
             badges: 'new',
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             colorIds: Array.from(variantColors),
+            Photo: imageList
           };
           arrData.push(dataList);
         }

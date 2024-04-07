@@ -16,10 +16,7 @@ productRouter.route('/uploadPro').post(
 
 productRouter.route('/getAllproduct').get(productController.index);
 
-productRouter.route('/getAllproductList').post(
-
-  productController.getAllProductList
-);
+productRouter.route('/getAllproductList').post(productController.getAllProductList);
 
 productRouter.route('/search/getAllproductList').get(
 
