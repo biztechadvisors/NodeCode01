@@ -44,10 +44,10 @@ module.exports = {
 
   async createAttribute(req, res, next) {
     try {
-      const { name, id } = req.body;
+      const { name } = req.body;
       const slug = convertToSlug(name);
 
-      const attribute = await db.Attribute.findOne({ where: { id: id } });
+      const attribute = await db.Attribute.findOne({ where: { slug: slug } });
 
       if (attribute) {
         // Update the existing attribute

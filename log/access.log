@@ -3190,3 +3190,4 @@
 [0mGET /api/category/admin/main-list [36m304[0m 35.146 ms - -[0m
 [0mOPTIONS /api/seller/history-product?limit=20&page=1 [32m204[0m 0.891 ms - 0[0m
 [0mGET /api/seller/history-product?limit=20&page=1 [36m304[0m 165.211 ms - -[0m
+[0mPOST /api/attribute/attributeAdd [32m200[0m 850.857 ms - 67[0m
