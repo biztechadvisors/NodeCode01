@@ -223,7 +223,9 @@ module.exports = {
         productVariants,
         desc,
       } = req.body;
+
       console.log('Body', req.body)
+
       const varients = JSON.parse(productVariants);
 
       const product = await db.product.findOne({
@@ -249,11 +251,6 @@ module.exports = {
           );
 
           const priceEntries = await Promise.all(varients.map(async (variant) => {
-            let color = null;
-            if (variant.colorCode) {
-              color = await db.ch_color_detail.findOne({ where: { TITLE: variant.colorCode } }).catch(() => null);
-            }
-            const colorId = color ? color.id : null; // Use the retrieved color ID or null if it is not defined
 
             let slug = convertToSlug(variant.productName)
 
@@ -267,11 +264,11 @@ module.exports = {
               actualPrice: variant.actualPrice,
               memory: variant.memory,
               qty: variant.qty,
-              colorId: colorId,
+              colorId: variant.attribute.Color,
               discountPer: variant.discountPer,
               discount: variant.discount,
               netPrice: variant.netPrice,
-              brandId: brand,
+              brandId: brand ? brand : null,
               shortDesc: variant.shortDesc,
               longDesc: variant.longDesc
             };
