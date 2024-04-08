@@ -1,12 +1,19 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.addColumn("BannerDetails", "type", {
-        type: Sequelize.ENUM,
-        values: ["0", "1", "2", "3", "4"],
-        comment: "0 (laptop), 1 (mobile), 2(deals), 3(single), 4(another)",
-        after: "status",
-      });
+      // Check if the column 'networkType' already exists in the 'ProductVariant' table
+      const columns = await queryInterface.describeTable('ProductVariant');
+      if ('networkType' in columns) {
+        console.log('Column "networkType" already exists in the table "ProductVariant".');
+      } else {
+        // If 'networkType' does not exist, add it
+        await queryInterface.addColumn("ProductVariant", "networkType", {
+          type: Sequelize.STRING, // Adjust the data type as needed
+          allowNull: true, // Modify options as required
+          after: "status", // Specify the column after which 'networkType' should be added
+        });
+      }
+
       return Promise.resolve();
     } catch (e) {
       return Promise.reject(e);
@@ -15,7 +22,8 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.removeColumn("BannerDetails", "type");
+      // Remove the 'networkType' column from the 'ProductVariant' table
+      await queryInterface.removeColumn("ProductVariant", "networkType");
       return Promise.resolve();
     } catch (e) {
       return Promise.reject(e);

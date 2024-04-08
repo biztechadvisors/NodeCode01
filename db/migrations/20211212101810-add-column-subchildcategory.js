@@ -1,18 +1,18 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.addColumn("SubChildCategories", "title", {
-        type: Sequelize.STRING,
-        after: "subcategoryId",
-      });
-      await queryInterface.addColumn("SubChildCategories", "keyword", {
-        type: Sequelize.TEXT,
-        after: "title",
-      });
-      await queryInterface.addColumn("SubChildCategories", "desc", {
-        type: Sequelize.TEXT,
-        after: "keyword",
-      });
+      // Check if the column 'Sequence' already exists in the 'Ch_Super_Categories' table
+      const columns = await queryInterface.describeTable('Ch_Super_Categories');
+      if ('Sequence' in columns) {
+        console.log('Column "Sequence" already exists in the table "Ch_Super_Categories".');
+      } else {
+        // If 'Sequence' does not exist, add it
+        await queryInterface.addColumn('Ch_Super_Categories', 'Sequence', {
+          type: Sequelize.INTEGER,
+          after: "Slug",
+        });
+      }
+
       return Promise.resolve();
     } catch (e) {
       return Promise.reject(e);
@@ -21,13 +21,11 @@ module.exports = {
 
   down: async (queryInterface, Sequelize) => {
     try {
-      await queryInterface.removeColumn("SubChildCategories", "title");
-      await queryInterface.removeColumn("SubChildCategories", "keyword");
-      await queryInterface.removeColumn("SubChildCategories", "desc");
-
+      // Remove the 'Sequence' column from the 'Ch_Super_Categories' table
+      await queryInterface.removeColumn('Ch_Super_Categories', 'Sequence');
       return Promise.resolve();
     } catch (e) {
       return Promise.reject(e);
     }
-  },
+  }
 };

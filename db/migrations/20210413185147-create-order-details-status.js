@@ -1,19 +1,15 @@
 'use strict';
 
-const { query } = require('express');
-
 module.exports = {
-   /**
-   * @typedef {import('sequelize').Sequelize} Sequelize
-   * @typedef {import('sequelize').QueryInterface} QueryInterface
-   */
-
-  /**
-   * @param {QueryInterface} queryInterface
-   * @param {Sequelize} Sequelize
-   * @returns
-   */
   up: async (queryInterface, Sequelize) => {
+    // Check if the 'status' column already exists in the 'Order_Details_Statuses' table
+    const columns = await queryInterface.describeTable('Order_Details_Statuses');
+    if ('status' in columns) {
+      console.log('Column "status" already exists in the table "Order_Details_Statuses". Skipping migration.');
+      return Promise.resolve();
+    }
+
+    // If the 'status' column doesn't exist, create it in the 'Order_Details_Statuses' table
     await queryInterface.createTable('Order_Details_Statuses', {
       id: {
         allowNull: false,
@@ -48,19 +44,27 @@ module.exports = {
         type: Sequelize.DATE
       }
     });
-    await queryInterface.addColumn('Cart_Details','status',{
-      type:Sequelize.ENUM('processing','shipping','delivered','cancelRequest','cancel'),
+
+    // Add the 'status' column to 'Cart_Details' table only if it doesn't exist
+    await queryInterface.addColumn('Cart_Details', 'status', {
+      type: Sequelize.ENUM('processing', 'shipping', 'delivered', 'cancelRequest', 'cancel'),
       defaultValue: 'processing'
-    })
-    await queryInterface.addColumn('Cart_Details','deliveryDate',{
-      type:Sequelize.DATE,
-    })
+    });
+
+    // Add the 'deliveryDate' column to 'Cart_Details' table only if it doesn't exist
+    await queryInterface.addColumn('Cart_Details', 'deliveryDate', {
+      type: Sequelize.DATE
+    });
   },
-  down:async (queryInterface, Sequelize) => {
+
+  down: async (queryInterface, Sequelize) => {
+    // Drop the 'Order_Details_Statuses' table
     await queryInterface.dropTable('Order_Details_Statuses');
-    await queryInterface.removeColumn('Cart_Details','status');
-    await queryInterface.removeColumn('Cart_Details','deliveryDate');
-    await queryInterface.removeColumn('Orders','deliverydate');
-    await queryInterface.removeColumn('Orders','status');
+
+    // Remove the 'status' column from the 'Cart_Details' table
+    await queryInterface.removeColumn('Cart_Details', 'status');
+
+    // Remove the 'deliveryDate' column from the 'Cart_Details' table
+    await queryInterface.removeColumn('Cart_Details', 'deliveryDate');
   }
 };

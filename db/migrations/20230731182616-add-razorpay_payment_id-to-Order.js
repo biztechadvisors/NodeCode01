@@ -2,15 +2,35 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    // Add the new column 'razorpay_payment_id' to the 'Order' table
-    await queryInterface.addColumn('Orders', 'razorpay_payment_id', {
-      type: Sequelize.STRING, // Adjust the data type if necessary
-      allowNull: true, // Set to false if the column should not be nullable
-    });
+    const transaction = await queryInterface.sequelize.transaction();
+    try {
+      const columnsOrders = await queryInterface.describeTable('Orders');
+      if (!columnsOrders['razorpay_payment_id']) {
+        await queryInterface.addColumn('Orders', 'razorpay_payment_id', {
+          type: Sequelize.STRING,
+          allowNull: true,
+        }, { transaction });
+      }
+      await transaction.commit();
+      return Promise.resolve();
+    } catch (e) {
+      await transaction.rollback();
+      return Promise.reject(e);
+    }
   },
 
   down: async (queryInterface, Sequelize) => {
-    // Remove the added column when rolling back the migration
-    await queryInterface.removeColumn('Orders', 'razorpay_payment_id');
+    const transaction = await queryInterface.sequelize.transaction();
+    try {
+      const columnsOrders = await queryInterface.describeTable('Orders');
+      if (columnsOrders['razorpay_payment_id']) {
+        await queryInterface.removeColumn('Orders', 'razorpay_payment_id', { transaction });
+      }
+      await transaction.commit();
+      return Promise.resolve();
+    } catch (e) {
+      await transaction.rollback();
+      return Promise.reject(e);
+    }
   },
 };

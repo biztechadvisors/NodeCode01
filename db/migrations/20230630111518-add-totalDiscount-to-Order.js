@@ -1,14 +1,36 @@
 'use strict';
 
 module.exports = {
-  up: (queryInterface, Sequelize) => {
-    return queryInterface.addColumn('Orders', 'totalDiscount', {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-    });
+  up: async (queryInterface, Sequelize) => {
+    const transaction = await queryInterface.sequelize.transaction();
+    try {
+      const columnsOrders = await queryInterface.describeTable('Orders');
+      if (!columnsOrders['totalDiscount']) {
+        await queryInterface.addColumn('Orders', 'totalDiscount', {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        }, { transaction });
+      }
+      await transaction.commit();
+      return Promise.resolve();
+    } catch (e) {
+      await transaction.rollback();
+      return Promise.reject(e);
+    }
   },
 
-  down: (queryInterface, Sequelize) => {
-    return queryInterface.removeColumn('Orders', 'totalDiscount');
-  }
+  down: async (queryInterface, Sequelize) => {
+    const transaction = await queryInterface.sequelize.transaction();
+    try {
+      const columnsOrders = await queryInterface.describeTable('Orders');
+      if (columnsOrders['totalDiscount']) {
+        await queryInterface.removeColumn('Orders', 'totalDiscount', { transaction });
+      }
+      await transaction.commit();
+      return Promise.resolve();
+    } catch (e) {
+      await transaction.rollback();
+      return Promise.reject(e);
+    }
+  },
 };
