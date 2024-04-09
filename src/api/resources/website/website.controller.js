@@ -210,6 +210,17 @@ module.exports = {
               }
             }
             variantMemory.add(variant.memory);
+
+            // Adding variation options to the map
+            const variantAttributes = new Map();
+
+            for (const option of variant.variationOptions) { // Corrected this line
+              if (!variantAttributes.has(option.name)) {
+                variantAttributes.set(option.name, new Set());
+              }
+              variantAttributes.get(option.name).add(option.value);
+            }
+
           }
 
           const dataList = {
@@ -233,10 +244,7 @@ module.exports = {
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             badges: 'new',
             colorIds: Array.from(variantColors),
-            variationOptions: value.ProductVariants[0] ? value.ProductVariants[0].variationOptions.map(option => ({
-              name: option.name,
-              value: option.value
-            })) : [] // Extract variationOptions
+            Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
           arrData.push(dataList);
         }
@@ -622,6 +630,11 @@ module.exports = {
             ],
             include: [
               {
+                model: db.VariationOption, // Include VariationOption model
+                as: 'variationOptions', // Set the alias
+                attributes: ['name', 'value'],
+              },
+              {
                 model: db.ch_color_detail,
                 as: 'color',
                 attributes: ['id', 'TITLE', 'CODE'],
@@ -654,6 +667,17 @@ module.exports = {
               }
             }
             variantMemory.add(variant.memory);
+
+            // Adding variation options to the map
+            const variantAttributes = new Map();
+
+            for (const option of variant.variationOptions) { // Corrected this line
+              if (!variantAttributes.has(option.name)) {
+                variantAttributes.set(option.name, new Set());
+              }
+              variantAttributes.get(option.name).add(option.value);
+            }
+
           }
 
           const dataList = {
@@ -678,6 +702,7 @@ module.exports = {
             badges: 'new',
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             colorIds: Array.from(variantColors),
+            Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
           arrData.push(dataList);
         }
@@ -1560,7 +1585,6 @@ module.exports = {
           const imageList = value.productphotos.map((url) => url.imgUrl);
           const variantColors = new Set();
           const variantMemory = new Set();
-          const variantAttributes = new Map();
 
           for (const variant of value.ProductVariants) {
             if (variant.color) {
@@ -1574,6 +1598,8 @@ module.exports = {
             variantMemory.add(variant.memory);
 
             // Adding variation options to the map
+            const variantAttributes = new Map();
+
             for (const option of variant.variationOptions) { // Corrected this line
               if (!variantAttributes.has(option.name)) {
                 variantAttributes.set(option.name, new Set());
