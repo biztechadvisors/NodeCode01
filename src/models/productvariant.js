@@ -175,6 +175,11 @@ module.exports = (sequelize, DataTypes) => {
       sourceKey: "processorId",
       as: "processor",
     });
+
+    models.ProductVariant.hasMany(models.VariationOption, {
+      foreignKey: 'productVariantId',
+      as: 'variationOptions', // This is optional
+    });
   };
   return ProductVariant;
 };

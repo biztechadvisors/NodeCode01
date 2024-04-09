@@ -1,5 +1,5 @@
-// In the migration file
 'use strict';
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
     await queryInterface.createTable('VariationOptions', {
@@ -37,6 +37,7 @@ module.exports = {
       }
     });
   },
+
   down: async (queryInterface, Sequelize) => {
     await queryInterface.dropTable('VariationOptions');
   }

@@ -148,10 +148,8 @@ module.exports = {
   async getCollectionProducts(req, res, next) {
     const { slug } = req.query;
 
-    console.log("Ram", slug)
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
     const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
-
 
     try {
       const collection = await db.collection.findOne({ where: { slug } });
@@ -162,7 +160,9 @@ module.exports = {
         });
         return res.status(response.code).json(response);
       }
+
       const collectionId = collection.id;
+
       const products = await db.product.findAndCountAll({
         where: {
           brandId: collectionId,
@@ -179,6 +179,11 @@ module.exports = {
                 model: db.ch_color_detail,
                 as: 'color',
                 attributes: ['id', 'TITLE', 'CODE'],
+              },
+              {
+                model: db.VariationOption, // Include VariationOption model
+                as: 'variationOptions', // Set the alias
+                attributes: ['name', 'value'],
               },
             ],
           },
@@ -228,6 +233,10 @@ module.exports = {
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             badges: 'new',
             colorIds: Array.from(variantColors),
+            variationOptions: value.ProductVariants[0] ? value.ProductVariants[0].variationOptions.map(option => ({
+              name: option.name,
+              value: option.value
+            })) : [] // Extract variationOptions
           };
           arrData.push(dataList);
         }
@@ -251,7 +260,7 @@ module.exports = {
         return res.status(response.code).json(response);
       }
     } catch (err) {
-      console.log(err)
+      console.log(err);
       next(err);
     }
   },
@@ -275,6 +284,11 @@ module.exports = {
                 model: db.ch_color_detail,
                 as: "color",
                 attributes: ["id", "TITLE", "CODE", "thumbnail"],
+              },
+              {
+                model: db.VariationOption, // Include VariationOption model
+                attributes: ["name", "value"],
+                as: "variationOptions", // Set the alias
               },
               {
                 model: db.product,
@@ -348,6 +362,11 @@ module.exports = {
             colorList: uniqueArr(colorArr),
             Specification: variant.product.ch_specifications,
             memory: variant.memory,
+            // Add Variation Options
+            variationOptions: variant.variationOptions.map((option) => ({
+              name: option.name,
+              value: option.value,
+            })),
           })),
           Thumbnail: product ? product.photo : "",
           Photo: imageList ? imageList : [],
@@ -366,8 +385,7 @@ module.exports = {
     } catch (err) {
       next(err);
     }
-  }
-  ,
+  },
 
   async getCategoryByProduct(req, res, next) {
     const { slug } = req.body;
@@ -1500,7 +1518,6 @@ module.exports = {
   },
 
   async getAllProductList(req, res, next) {
-
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
     const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
 
@@ -1523,6 +1540,11 @@ module.exports = {
                 as: 'color',
                 attributes: ['id', 'TITLE', 'CODE'],
               },
+              {
+                model: db.VariationOption,
+                as: 'variationOptions', // Use the correct alias here
+                attributes: ['name', 'value'],
+              },
             ],
           },
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
@@ -1533,15 +1555,14 @@ module.exports = {
 
       if (products.count > 0) {
         const arrData = [];
-        let imageList = []
 
         for (const value of products.rows) {
-          imageList = value.productphotos.map((url) => url.imgUrl);
+          const imageList = value.productphotos.map((url) => url.imgUrl);
           const variantColors = new Set();
           const variantMemory = new Set();
+          const variantAttributes = new Map();
 
           for (const variant of value.ProductVariants) {
-
             if (variant.color) {
               variantColors.add(variant.color.TITLE);
             } else if (variant.colorId) {
@@ -1551,7 +1572,14 @@ module.exports = {
               }
             }
             variantMemory.add(variant.memory);
-            
+
+            // Adding variation options to the map
+            for (const option of variant.variationOptions) { // Corrected this line
+              if (!variantAttributes.has(option.name)) {
+                variantAttributes.set(option.name, new Set());
+              }
+              variantAttributes.get(option.name).add(option.value);
+            }
           }
 
           const dataList = {
@@ -1575,7 +1603,8 @@ module.exports = {
             badges: 'new',
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             colorIds: Array.from(variantColors),
-            Photo: imageList
+            Photo: imageList,
+            Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
           arrData.push(dataList);
         }

@@ -212,7 +212,6 @@ module.exports = {
 
   async addProduct(req, res, next) {
     try {
-
       const {
         categoryId,
         subCategoryId,
@@ -226,7 +225,7 @@ module.exports = {
 
       console.log('Body', req.body)
 
-      const varients = JSON.parse(productVariants);
+      const variants = JSON.parse(productVariants);
 
       const product = await db.product.findOne({
         where: { name: name },
@@ -250,35 +249,45 @@ module.exports = {
             { transaction: t }
           );
 
-          const priceEntries = await Promise.all(varients.map(async (variant) => {
+          const productVariantsEntries = await Promise.all(variants.map(async (variant) => {
+            let slug = convertToSlug(variant.productName);
+            const productVariant = await db.ProductVariant.create(
+              {
+                productId: productCreated.id,
+                productName: variant.productName,
+                slug: slug,
+                productCode: variant.productCode
+                  ? variant.productCode
+                  : `PD${Math.random().toString(36).substr(2, 4)}`,
+                actualPrice: variant.actualPrice || 0,
+                distributorPrice: variant.distributorPrice || 0,
+                buyerPrice: variant.buyerPrice || 0,
+                memory: variant.memory || "",
+                qty: variant.qty || 0,
+                colorId: variant.attribute.Color || null,
+                discountPer: variant.discountPer || 0,
+                discount: variant.discount || 0,
+                netPrice: variant.netPrice || 0,
+                brandId: brand ? brand : null,
+                shortDesc: variant.shortDesc || "",
+                longDesc: variant.longDesc || ""
+              },
+              { transaction: t }
+            );
 
-            let slug = convertToSlug(variant.productName)
+            // Create VariationOptions for the current productVariant
+            const variationOptions = [];
+            for (const [attributeName, attributeValue] of Object.entries(variant.attribute)) {
+              variationOptions.push({
+                name: attributeName,
+                value: attributeValue,
+                productVariantId: productVariant.id
+              });
+            }
+            await db.VariationOption.bulkCreate(variationOptions, { transaction: t });
 
-            return {
-              productId: productCreated.id,
-              productName: variant.productName,
-              slug: slug,
-              productCode: variant.productCode
-                ? variant.productCode
-                : `PD${Math.random().toString(36).substr(2, 4)}`,
-              actualPrice: variant.actualPrice,
-              memory: variant.memory,
-              qty: variant.qty,
-              colorId: variant.attribute.Color,
-              discountPer: variant.discountPer,
-              discount: variant.discount,
-              netPrice: variant.netPrice,
-              brandId: brand ? brand : null,
-              shortDesc: variant.shortDesc,
-              longDesc: variant.longDesc
-            };
+            return productVariant;
           }));
-
-          // Check if there are any price entries
-          if (priceEntries.length) {
-            // Insert the price entries in bulk
-            await db.ProductVariant.bulkCreate(priceEntries, { transaction: t });
-          }
 
           await t.commit();
 
@@ -293,10 +302,15 @@ module.exports = {
         throw new RequestError("Already exist product", 409);
       }
     } catch (err) {
-      next(err);
+      // Handle error
+      if (err instanceof RequestError) {
+        return res.status(err.statusCode).json({ success: false, msg: err.message });
+      } else {
+        console.error("Some Error Occurred:", err);
+        return res.status(500).json({ success: false, msg: "Internal server error" });
+      }
     }
-  }
-  ,
+  },
 
   async index(req, res, next) {
     try {

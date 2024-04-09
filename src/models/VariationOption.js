@@ -1,24 +1,28 @@
-// models/variationoption.js
-'use strict';
-const { Model } = require('sequelize');
+// models/variationOption.js
 
+'use strict';
 module.exports = (sequelize, DataTypes) => {
-    class VariationOption extends Model {
-        static associate(models) {
-            VariationOption.belongsTo(models.ProductVariant, {
-                foreignKey: 'productVariantId',
-                onDelete: 'CASCADE',
-                onUpdate: 'CASCADE'
-            });
+    const VariationOption = sequelize.define('VariationOption', {
+        name: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        value: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        productVariantId: {
+            type: DataTypes.INTEGER,
+            allowNull: false, // Adjust this based on your requirement
         }
+    }, {});
+
+    VariationOption.associate = function (models) {
+        VariationOption.belongsTo(models.ProductVariant, {
+            foreignKey: 'productVariantId',
+            onDelete: 'CASCADE'
+        });
     };
-    VariationOption.init({
-        name: DataTypes.STRING,
-        value: DataTypes.STRING,
-        productVariantId: DataTypes.INTEGER
-    }, {
-        sequelize,
-        modelName: 'VariationOption',
-    });
+
     return VariationOption;
 };
