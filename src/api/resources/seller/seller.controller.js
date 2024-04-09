@@ -1115,6 +1115,11 @@ module.exports = {
             ...whereCond,
             include: [
               {
+                model: db.VariationOption, // Include VariationOption model
+                as: 'variationOptions', // Set the alias
+                attributes: ['name', 'value'],
+              },
+              {
                 model: db.ch_color_detail,
                 as: "color",
                 attributes: ["id", "TITLE", "CODE"],

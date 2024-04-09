@@ -339,7 +339,7 @@ module.exports = {
     let limit = 40;
     let offset = 0;
     let page = 1;
-    if (req.body.limit != undefined) {
+    if (req.body.limit !== undefined) {
       limit = parseInt(req.body.limit);
     }
     if (req.body.page) {
@@ -347,64 +347,57 @@ module.exports = {
       if (page < 1) page = 1;
     }
     let { status, id, categoryId } = req.body;
+
     try {
       if (id) {
-        db.product
-          .findAll({
-            where: { id: req.body.id },
-            include: [{ model: db.productphoto }, { model: db.ProductVariant }],
-          })
-          .then((list) => {
-            res.status(200).json({ product: list });
-          })
-          .catch(function (err) {
-            console.log("some error", err);
-            next(err);
-          });
+        const product = await db.product.findOne({
+          where: { id: req.body.id },
+          include: [
+            { model: db.productphoto },
+            { model: db.ProductVariant, include: [{ model: db.VariationOption }] },
+          ],
+        });
+        if (!product) {
+          return res.status(404).json({ message: "Product not found" });
+        }
+        const imageList = product.productphotos.map((url) => url.imgUrl);
+        const variantAttributes = new Map();
+        for (const variant of product.ProductVariants) {
+          for (const option of variant.VariationOptions) {
+            if (!variantAttributes.has(option.name)) {
+              variantAttributes.set(option.name, new Set());
+            }
+            variantAttributes.get(option.name).add(option.value);
+          }
+        }
+        res.status(200).json({ product: { ...product.toJSON(), imageList, variantAttributes } });
       } else if (status && categoryId) {
-        db.product
-          .findAll({
-            where: { status: status, categoryId: categoryId },
-            include: [{ model: db.productphoto }, { model: db.ProductVariant }],
-
-            // include: [{ model: db.SubCategory, attributes: ["id", "sub_name"], include: [{ model: db.category, attributes: ["id", "name"] }] }],
-          })
-          .then((list) => {
-            res.status(200).json({ product: list });
-          })
-          .catch(function (err) {
-            console.log("some error", err);
-            next(err);
-          });
+        const products = await db.product.findAll({
+          where: { status: status, categoryId: categoryId },
+          include: [
+            { model: db.productphoto },
+            { model: db.ProductVariant, include: [{ model: db.VariationOption }] },
+          ],
+        });
+        res.status(200).json({ products });
       } else {
-        db.product
-          .count()
-          .then((count) => {
-            let pages = Math.ceil(count / limit);
-            offset = limit * (page - 1);
-            return db.product
-              .findAll({
-                order: [["createdAt", "DESC"]],
-                include: [
-                  { model: db.productphoto },
-                  { model: db.ProductVariant },
-                ],
-                // include: [{ model: db.SubCategory, attributes: ["id", "sub_name"], include: [{ model: db.category, attributes: ["id", "name"] }] }],
-
-                limit: limit,
-                offset: offset,
-              })
-              .then((r) => [r, pages, count]);
-          })
-          .then(([list, pages, count]) => {
-            res.status(200).json({ product: list, count: count, pages: pages });
-          })
-          .catch(function (err) {
-            console.log("some error", err);
-            next(err);
-          });
+        const [count, products] = await Promise.all([
+          db.product.count(),
+          db.product.findAll({
+            order: [["createdAt", "DESC"]],
+            include: [
+              { model: db.productphoto },
+              { model: db.ProductVariant, include: [{ model: db.VariationOption }] },
+            ],
+            limit: limit,
+            offset: (page - 1) * limit,
+          }),
+        ]);
+        const pages = Math.ceil(count / limit);
+        res.status(200).json({ products, count, pages });
       }
     } catch (err) {
+      console.log("Some error", err);
       next(err);
     }
   },
@@ -612,22 +605,54 @@ module.exports = {
 
   async getProductListById(req, res, next) {
     try {
-      db.product
-        .findAll({
-          where: { id: req.query.id },
-          include: [{ model: db.productphoto, attributes: ["id", "imgUrl"] }],
-          order: [["createdAt", "DESC"]],
-        })
-        .then((list) => {
-          res.status(200).json({ success: true, product: list });
-        })
-        .catch(function (err) {
-          next(err);
+      const productId = req.query.id;
+      const products = await db.product.findAll({
+        where: { id: productId },
+        include: [
+          { model: db.productphoto, attributes: ["id", "imgUrl"] },
+          {
+            model: db.ProductVariant,
+            include: [{ model: db.VariationOption, as: 'variationOptions' }], // Include VariationOption model
+          },
+        ],
+        order: [["createdAt", "DESC"]],
+      });
+
+      if (!products || products.length === 0) {
+        // Check if no product found
+        res.status(404).json({ success: false, message: "Product not found" });
+        return;
+      }
+
+      const productList = products.map((product) => {
+        // Map each product to include variation options
+        const imageList = product.productphotos.map((photo) => photo.imgUrl);
+        const variantAttributes = new Map();
+
+        // Adding variation options to the map
+        product.ProductVariants.forEach((variant) => {
+          for (const option of variant.variationOptions) {
+            if (!variantAttributes.has(option.name)) {
+              variantAttributes.set(option.name, new Set());
+            }
+            variantAttributes.get(option.name).add(option.value);
+          }
         });
+
+        return {
+          id: product.id,
+          name: product.name,
+          imageList: imageList,
+          variationOptions: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
+        };
+      });
+
+      res.status(200).json({ success: true, products: productList });
     } catch (err) {
-      throw new RequestError("Error");
+      next(err);
     }
   },
+
 
   async getWebProductListById(req, res, next) {
     let { varientId, productId } = req.body;
