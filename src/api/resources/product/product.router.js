@@ -19,12 +19,10 @@ productRouter.route('/getAllproduct').get(productController.index);
 productRouter.route('/getAllproductList').post(productController.getAllProductList);
 
 productRouter.route('/search/getAllproductList').get(
-
   productController.searchAllProductList
 );
 
 productRouter.route('/update').post(
-
   upload.single('photo'),
   productController.update
 );

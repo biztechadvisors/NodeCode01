@@ -484,13 +484,9 @@ module.exports = {
         LocalDeiveryCharge,
         selectedCategory,
         selectedSubCategory,
-
       } = req.body;
 
-      // const catId = await db.category.findOne({ where: { name: mainCatName } });
-      // const subCatId = await db.SubCategory.findOne({ where: { sub_name: subCatName } });
-
-      let varients = priceDetails;
+      let variants = priceDetails;
 
       const updatedProduct = await db.product.findOne({ where: { id: productId } });
 
@@ -512,48 +508,75 @@ module.exports = {
         photo: req.file ? req.file.location : updatedProduct.photo,
       };
 
-      // console.log("updateFields", updatedFields)
+      // Update product
+      await db.product.update(updatedFields, { where: { id: productId } });
 
-      const updatedProductResult = await db.product.update(updatedFields, { where: { id: productId } });
+      // Update product variants and associated variation options
+      for (let i = 0; i < variants.length; i++) {
+        let variant = variants[i];
 
-      if (varients.length) {
-        let code = "PD" + Math.random().toString(36).substr(2, 4);
-        let priceEntries = [];
+        // Check if the variant already exists
+        let existingVariant = await db.ProductVariant.findOne({ where: { id: variant.id } });
 
-        for (let i = 0; i < varients.length; i++) {
-          let variant = varients[i];
-
-          let colorId = null;
-          if (variant.color) {
-            const color = await db.ch_color_detail.findOne({ where: { TITLE: variant.color } }).catch(() => null);
-            colorId = color ? color.id : null;
-          }
-          // console.log("colorCode", variant.color, colorId)
-
-          priceEntries.push({
+        if (!existingVariant) {
+          // If the variant doesn't exist, create a new one
+          existingVariant = await db.ProductVariant.create({
             productId: productId,
-            id: variant.id,
             productName: variant.productName,
-            productCode: variant.productCode ? variant.productCode : code,
-            actualPrice: variant.actualPrice,
-            memory: variant.memory,
-            qty: variant.qty,
-            qtyWarning: variant.qtyWarning,
-            colorId: colorId || variant.colorId,
-            discountPer: variant.discountPer,
-            discount: variant.discount,
-            total: variant.total,
-            netPrice: variant.netPrice,
-            longDesc: variant.longDesc,
-            shortDesc: variant.shortDesc,
+            slug: convertToSlug(variant.productName),
+            productCode: variant.productCode,
+            actualPrice: variant.actualPrice || 0,
+            distributorPrice: variant.distributorPrice || 0,
+            buyerPrice: variant.buyerPrice || 0,
+            memory: variant.memory || "",
+            qty: variant.qty || 0,
+            qtyWarning: variant.qtyWarning || 0,
+            discountPer: variant.discountPer || 0,
+            discount: variant.discount || 0,
+            total: variant.total || 0,
+            netPrice: variant.netPrice || 0,
+            longDesc: variant.longDesc || "",
+            shortDesc: variant.shortDesc || "",
+          });
+        } else {
+          // If the variant exists, update its fields
+          existingVariant = await existingVariant.update({
+            productName: variant.productName,
+            slug: convertToSlug(variant.productName),
+            productCode: variant.productCode,
+            actualPrice: variant.actualPrice || 0,
+            distributorPrice: variant.distributorPrice || 0,
+            buyerPrice: variant.buyerPrice || 0,
+            memory: variant.memory || "",
+            qty: variant.qty || 0,
+            qtyWarning: variant.qtyWarning || 0,
+            discountPer: variant.discountPer || 0,
+            discount: variant.discount || 0,
+            total: variant.total || 0,
+            netPrice: variant.netPrice || 0,
+            longDesc: variant.longDesc || "",
+            shortDesc: variant.shortDesc || "",
           });
         }
 
-        // console.log("priceEntries", priceEntries)
+        // Update or create associated variation options
+        for (const option of variant.variationOptions) {
+          let existingOption = await db.VariationOption.findOne({
+            where: { name: option.name, productVariantId: existingVariant.id }
+          });
 
-        await db.ProductVariant.bulkCreate(priceEntries, {
-          updateOnDuplicate: Object.keys(priceEntries[0]),
-        });
+          if (!existingOption) {
+            // If the option doesn't exist, create a new one
+            await db.VariationOption.create({
+              name: option.name,
+              value: option.value,
+              productVariantId: existingVariant.id
+            });
+          } else {
+            // If the option exists, update its value
+            await existingOption.update({ value: option.value });
+          }
+        }
       }
 
       res.status(200).json({ success: true, msg: "Updated Successfully" });
@@ -561,9 +584,8 @@ module.exports = {
       console.error(err);
       res.status(500).json({ success: false, msg: "An error occurred" });
     }
-  },
-
-
+  }
+  ,
 
   async searchAllProductList(req, res, next) {
     try {

@@ -2,6 +2,8 @@ const nodemailer = require("nodemailer");
 const config = require("./config");
 const { db } = require("./models");
 const CryptoJS = require("crypto-js");
+const PDFDocument = require('pdfkit');
+const fs = require("node:fs")
 
 module.exports = {
   sendOrderTrackingEmail: async (customerEmail, htmlContent) => {
@@ -488,7 +490,6 @@ module.exports = {
 
     const grandTotalInWords = convertNumberToWords(grandTotal);
 
-
     // Create a PDF document
     const doc = new PDFDocument({ margin: 50 });
 
@@ -496,6 +497,7 @@ module.exports = {
     const pdfPath = 'invoice.pdf';
     const pdfStream = fs.createWriteStream(pdfPath);
     doc.pipe(pdfStream);
+
     const htmlHeader = `<html lang="en">
 
     <head>
@@ -669,6 +671,9 @@ module.exports = {
         left: '0.5in'
       },
     };
+
+    // End the document
+    doc.end();
 
     return new Promise((resolve, reject) => {
       try {

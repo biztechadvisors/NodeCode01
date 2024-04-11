@@ -112,6 +112,50 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 
+updateOrdQuantityProd = async (ordProducts) => {
+    try {
+        if (!ordProducts || ordProducts.length === 0) {
+            throw new Error('Invalid input. No products provided.');
+        }
+
+        const variantIds = ordProducts.map(product => product.selectedVariant.id);
+        // console.log('Variant IDs:', variantIds); // Debug logging
+
+        const variants = await db.ProductVariant.findAll({ where: { id: { [Op.in]: variantIds } } });
+        // console.log('Variants found in DB:', variants); // Debug logging
+
+        if (variants.length !== variantIds.length) {
+            const foundVariantIds = variants.map(variant => variant.id);
+            const notFoundVariantIds = variantIds.filter(id => !foundVariantIds.includes(id));
+            throw new Error(`Variants not found for IDs: ${notFoundVariantIds.join(', ')}`);
+        }
+
+        // Update the quantity for each ordered product variant
+        for (const ordProduct of ordProducts) {
+            const variant = variants.find(v => v.id === ordProduct.selectedVariant.id);
+
+            if (variant) {
+                // Validate that the order quantity does not exceed the available quantity
+                if (ordProduct.quantity > variant.qty) {
+                    throw new Error(`Order quantity exceeds available quantity for variant ID ${variant.id}`);
+                }
+
+                // Update the variant quantity by subtracting the order quantity
+                const updatedQuantity = variant.qty - ordProduct.quantity;
+
+                // Update the variant quantity in the database
+                await db.ProductVariant.update({ qty: updatedQuantity }, { where: { id: variant.id } });
+            }
+        }
+
+        console.log('Product variant quantities updated successfully');
+    } catch (error) {
+        console.error('Error updating product variant quantities:', error.message || error);
+        throw error;
+    }
+}
+
+
 module.exports = {
     //    shiprocket -------------Start
     getOrderTracking: async (req, res, next) => {
@@ -416,6 +460,9 @@ module.exports = {
                     orderId: order.id,
                     userId: customer ? customer.id : null
                 }, { transaction: t });
+
+                // Update product variant quantities
+                await updateOrdQuantityProd(productList, t);
 
                 await mailer.sendInvoiceForCustomerNew(
                     req.body,

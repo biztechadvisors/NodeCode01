@@ -31,6 +31,7 @@ const shiprocketService = {
 
             return response.data;
         } catch (error) {
+            console.log("error.response.data********", error.response.data)
             throw new Error('Error creating Shiprocket order', error.response.data.errors);
         }
     },

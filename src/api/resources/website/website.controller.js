@@ -607,7 +607,7 @@ module.exports = {
     try {
       const products = await db.product.findAndCountAll({
         where: whereCond0,
-        attributes: ["id", "categoryId", "subCategoryId", "desc", "name", "photo", "slug", 'brandId'],
+        attributes: ["id", "categoryId", "subCategoryId", "desc", "name", "photo", "slug", 'brandId', 'PubilshStatus'],
         include: [
           {
             model: db.ProductVariant,
@@ -630,8 +630,8 @@ module.exports = {
             ],
             include: [
               {
-                model: db.VariationOption, // Include VariationOption model
-                as: 'variationOptions', // Set the alias
+                model: db.VariationOption,
+                as: 'variationOptions',
                 attributes: ['name', 'value'],
               },
               {
