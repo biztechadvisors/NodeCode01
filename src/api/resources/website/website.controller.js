@@ -181,8 +181,8 @@ module.exports = {
                 attributes: ['id', 'TITLE', 'CODE'],
               },
               {
-                model: db.VariationOption, // Include VariationOption model
-                as: 'variationOptions', // Set the alias
+                model: db.VariationOption,
+                as: 'variationOptions',
                 attributes: ['name', 'value'],
               },
             ],
@@ -199,6 +199,7 @@ module.exports = {
         for (const value of products.rows) {
           const variantColors = new Set();
           const variantMemory = new Set();
+          const variantAttributes = new Map(); // Define variantAttributes outside the loop
 
           for (const variant of value.ProductVariants) {
             if (variant.color) {
@@ -212,15 +213,12 @@ module.exports = {
             variantMemory.add(variant.memory);
 
             // Adding variation options to the map
-            const variantAttributes = new Map();
-
-            for (const option of variant.variationOptions) { // Corrected this line
+            for (const option of variant.variationOptions) {
               if (!variantAttributes.has(option.name)) {
                 variantAttributes.set(option.name, new Set());
               }
               variantAttributes.get(option.name).add(option.value);
             }
-
           }
 
           const dataList = {
@@ -268,10 +266,11 @@ module.exports = {
         return res.status(response.code).json(response);
       }
     } catch (err) {
-      console.log(err);
+      console.error(err);
       next(err);
     }
-  },
+  }
+  ,
 
   async getProductDetail(req, res, next) {
     const { productId } = req.query; // Get the productId from the request query
@@ -538,25 +537,19 @@ module.exports = {
   },
 
   async getFilterAllProduct(req, res, next) {
-
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
     const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
     const {
-      filter_memory,
       filter_category,
       filter_SubCategory,
-      filter_color,
       filter_price,
+      filter_attribute,
     } = req.query;
 
     const whereCond = {};
     const whereCond0 = [];
 
     // Apply filters
-    if (filter_memory) {
-      const memory = filter_memory.split(",");
-      whereCond.memory = { [Op.in]: memory };
-    }
 
     if (filter_category) {
       const categories = filter_category.split(",");
@@ -578,21 +571,70 @@ module.exports = {
       });
       if (subCategory) {
         whereCond0.push({ subCategoryId: subCategory.id });
-        console.log(whereCond0)
       }
     }
 
-    if (filter_color) {
-      const colors = filter_color.split(",");
-      const colorOr = colors.map((color) => ({ [Op.like]: `%${color}%` }));
-      const colorsId = await db.ch_color_detail.findAll({
-        attributes: ["id"],
-        where: { TITLE: { [Op.or]: colorOr } },
-        raw: true,
-      });
-      if (colorsId.length > 0) {
-        whereCond.colorId = { [Op.in]: colorsId.map(({ id }) => id) };
+    if (filter_attribute) {
+      let filterAttributeArray;
+
+      try {
+        filterAttributeArray = JSON.parse(filter_attribute);
+      } catch (error) {
+        console.error('Error parsing filter_attribute:', error);
+        const response = Util.getFormatedResponse(false, null, { message: 'Invalid filter attribute format' });
+        return res.status(400).json(response);
       }
+
+      if (Array.isArray(filterAttributeArray)) {
+        const filterAttributes = filterAttributeArray.map(attribute => {
+          const [name, value] = attribute.split(':');
+          return { name, value };
+        });
+
+        // Construct an array of conditions for each attribute value
+        const attributeAndConditions = filterAttributes.map(({ name, value }) => ({
+          name,
+          value: { [Op.like]: `%${value}%` } // Use like operator to match partial attribute values
+        }));
+
+        // Find products that match all specified attribute names and values
+        const productsWithAttributeValues = await db.ProductVariant.findAll({
+          attributes: ["productId"],
+          include: [
+            {
+              model: db.VariationOption,
+              as: 'variationOptions',
+              where: { [Op.or]: attributeAndConditions },
+            },
+          ],
+          group: ['ProductVariant.productId'],
+          having: Sequelize.literal(`COUNT(DISTINCT CASE WHEN variationOptions.name IN (${filterAttributes.map(attr => `'${attr.name}'`).join(',')}) THEN variationOptions.name END) = ${filterAttributes.length}`),
+          raw: true,
+        });
+
+        if (productsWithAttributeValues.length > 0) {
+          // Extract product IDs from the filtered products
+          const productIds = productsWithAttributeValues.map(({ productId }) => productId);
+
+          // Add condition to include only products with matching IDs
+          whereCond0.push({ id: { [Op.in]: productIds } });
+        } else {
+          const response = Util.getFormatedResponse(false, {
+            count: 0,
+            pages: 0,
+            items: [],
+          }, {
+            message: 'No products found with the specified attribute values.',
+          });
+          return res.status(response.code).json(response);
+        }
+
+      } else {
+        console.error('filter_attribute is not an array');
+        const response = Util.getFormatedResponse(false, null, { message: 'Invalid filter attribute format' });
+        return res.status(400).json(response);
+      }
+
     }
 
     if (filter_price) {
@@ -603,6 +645,8 @@ module.exports = {
         whereCond.netPrice = { [Op.between]: [startPrice, endPrice] };
       }
     }
+
+    whereCond0.push({ PubilshStatus: { [Op.eq]: 'Published' } });
 
     try {
       const products = await db.product.findAndCountAll({
@@ -635,11 +679,6 @@ module.exports = {
                 attributes: ['name', 'value'],
               },
               {
-                model: db.ch_color_detail,
-                as: 'color',
-                attributes: ['id', 'TITLE', 'CODE'],
-              },
-              {
                 model: db.productphoto,
                 attributes: ["id", "imgUrl"]
               }
@@ -652,60 +691,61 @@ module.exports = {
       });
 
       if (products.count > 0) {
-        const arrData = [];
-        for (const value of products.rows) {
-          // console.log("Value", value)
-          const variantColors = new Set();
-          const variantMemory = new Set();
-          for (const variant of value.ProductVariants) {
-            if (variant.color) {
-              variantColors.add(variant.color.TITLE);
+        const arrData = products.rows.map(value => ({
+          id: value.id,
+          variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
+          category_name: value.maincat.name,
+          subCategorie_name: value.SubCategory.sub_name,
+          Name: value.name,
+          PublishStatus: value.PubilshStatus,
+          HighLightDetail: value.HighLightDetail,
+          slug: value.slug,
+          Thumbnail: value.photo,
+          actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
+          netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
+          discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
+          discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
+          shortDesc: value.ProductVariants[0] ? value.ProductVariants[0].shortDesc : null,
+          longDesc: value.ProductVariants[0] ? value.ProductVariants[0].longDesc : null,
+          PubilshStatus: value.PubilshStatus,
+          productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
+          badges: 'new',
+          Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
+          colorIds: value.ProductVariants.reduce((acc, variant) => {
+            if (variant.color && variant.color.id) {
+              acc.push(variant.color.id);
             } else if (variant.colorId) {
-              const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-              if (chColorDetail) {
-                variantColors.add(chColorDetail.TITLE);
+              acc.push(variant.colorId);
+            }
+            return acc;
+          }, []),
+          Age: value.ProductVariants.reduce((acc, variant) => {
+            if (variant.variationOptions && variant.variationOptions.length > 0) {
+              const ageOption = variant.variationOptions.find(opt => opt.name === 'Age');
+              if (ageOption) {
+                acc.push(ageOption.value);
               }
             }
-            variantMemory.add(variant.memory);
-
-            // Adding variation options to the map
-            const variantAttributes = new Map();
-
-            for (const option of variant.variationOptions) { // Corrected this line
-              if (!variantAttributes.has(option.name)) {
-                variantAttributes.set(option.name, new Set());
-              }
-              variantAttributes.get(option.name).add(option.value);
+            return acc;
+          }, []),
+          Attributes: value.ProductVariants.reduce((acc, variant) => {
+            if (variant.variationOptions && variant.variationOptions.length > 0) {
+              variant.variationOptions.forEach(option => {
+                const existingIndex = acc.findIndex(item => item.name === option.name);
+                if (existingIndex !== -1) {
+                  // Check if the value is already present
+                  if (!acc[existingIndex].values.includes(option.value)) {
+                    acc[existingIndex].values.push(option.value);
+                  }
+                } else {
+                  acc.push({ name: option.name, values: [option.value] });
+                }
+              });
             }
+            return acc;
+          }, [])
 
-          }
-
-          const dataList = {
-            id: value.id,
-            variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
-            category_name: value.maincat.name,
-            subCategorie_name: value.SubCategory.sub_name,
-            Name: value.name,
-            Age: Array.from(variantMemory),
-            PublishStatus: value.PubilshStatus,
-            HighLightDetail: value.HighLightDetail,
-            slug: value.slug,
-            Thumbnail: value.photo,
-            actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
-            netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
-            discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
-            discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-            shortDesc: value.ProductVariants[0].shortDesc,
-            longDesc: value.ProductVariants[0].longDesc,
-            PubilshStatus: value.PubilshStatus,
-            productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
-            badges: 'new',
-            Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
-            colorIds: Array.from(variantColors),
-            Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
-          };
-          arrData.push(dataList);
-        }
+        }));
 
         const startIndex = (page - 1) * limit;
         const paginatedData = arrData.slice(startIndex, startIndex + limit);
@@ -720,13 +760,12 @@ module.exports = {
 
         return res.status(response.code).json(response);
       } else {
-        // Custom response object/function
         const response = Util.getFormatedResponse(false, {
           count: 0,
           pages: 0,
           items: [],
         }, {
-          message: 'products not found',
+          message: 'Products not found',
         });
         return res.status(response.code).json(response);
       }
@@ -735,6 +774,7 @@ module.exports = {
       throw new RequestError(err);
     }
   }
+
   ,
 
   async getFilterAllCategoryBrand(req, res, next) {
@@ -1002,6 +1042,7 @@ module.exports = {
       const productResults = await db.product.findAndCountAll({
         where: {
           [Op.or]: [
+            { PubilshStatus: { [Op.eq]: 'Published' } },
             ...searchWords.map((word) => ({
               [Op.or]: [
                 { name: { [Op.startsWith]: word } },
@@ -1039,9 +1080,14 @@ module.exports = {
             ],
             include: [
               {
-                model: db.ch_color_detail,
-                as: 'color',
-                attributes: ['id', 'TITLE', 'CODE'],
+                model: db.VariationOption,
+                attributes: ["name", "value"],
+                where: {
+                  name: 'color',
+                  value: {
+                    [Op.or]: searchWords.map(word => ({ [Op.like]: `%${word}%` }))
+                  }
+                }
               },
               {
                 model: db.productphoto,

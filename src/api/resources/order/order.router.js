@@ -4,6 +4,7 @@ const { jwtCustomerStrategy } = require('../../../middleware/strategy');
 
 const orderRouter = express.Router();
 
+// check
 // Track order route
 orderRouter.route('/track-order').post(orderController.getOrderTracking);
 
@@ -13,6 +14,7 @@ orderRouter.route('/calculateShippingCost').get(orderController.calculateShippin
 // Shiprocket update address route
 orderRouter.route('/shiprocket-updateAddress').post(orderController.getupdateOrederAddress);
 
+// check
 // Create order route
 orderRouter.route('/create').post(orderController.index);
 
