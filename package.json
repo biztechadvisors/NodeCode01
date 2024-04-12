@@ -32,6 +32,7 @@
     "firebase-admin": "^11.10.1",
     "google-auth-library": "^9.0.0",
     "helmet": "^7.0.0",
+    "html-pdf": "^3.0.1",
     "joi": "^17.9.2",
     "joi-date-extensions": "^1.2.0",
     "jsonwebtoken": "^9.0.1",
