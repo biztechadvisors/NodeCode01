@@ -104,6 +104,7 @@ const sendDeliveryMail = async () => {
         // res.status(500).json({ error: 'Internal server error' });
     }
 }
+
 cron.schedule('0 0 * * *', async () => {
     try {
         await sendDeliveryMail();
@@ -155,12 +156,11 @@ updateOrdQuantityProd = async (ordProducts) => {
     }
 }
 
-
 module.exports = {
-    //    shiprocket -------------Start
+    //    Shiprocket -------------Start
     getOrderTracking: async (req, res, next) => {
         try {
-            const { shipment_id } = req.query;
+            const { shipment_id } = req.body;
             console.log("shipment_id", shipment_id)
             // Assuming db.Orders is your Sequelize model
             const order = await db.Order.findOne({ where: { shipment_id: Number(shipment_id) } });
