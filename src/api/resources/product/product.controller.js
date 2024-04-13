@@ -223,8 +223,6 @@ module.exports = {
         desc,
       } = req.body;
 
-      console.log('Body', req.body)
-
       const variants = JSON.parse(productVariants);
 
       const product = await db.product.findOne({

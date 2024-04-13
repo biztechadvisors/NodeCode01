@@ -57,6 +57,99 @@ module.exports = {
     });
   },
 
+  //**************************************// 
+  sendResetUserPassword: (email) => {
+    return new Promise((resolve, reject) => {
+      try {
+        db.user.findOne({ where: { email: email } }).then((user) => {
+          if (user) {
+            var smtpTransport = nodemailer.createTransport({
+              host: process.env.MAIL_HOST,
+              port: process.env.MAIL_PORT,
+              secure: true,
+              auth: {
+                user: process.env.MAIL_USERNAME,
+                pass: process.env.MAIL_PASSWORD,
+              },
+              tls: { rejectUnauthorized: false },
+            });
+
+            const link = `${process.env.SHOP_URL}/auth/ForgotPass?email=${email}`
+
+            const emailContent = `
+      <html>
+      <head>
+          <style>
+              body {
+                  font-family: Arial, sans-serif;
+                  background-color: #f2f2f2;
+                  padding: 20px;
+              }
+              .email-container {
+                  background-color: #ffffff;
+                  padding: 20px;
+                  border-radius: 10px;
+                  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+              }
+              .link {
+                  color: #007bff;
+                  text-decoration: none;
+              }
+              .footer {
+                  font-size: 12px;
+                  color: #777;
+                  margin-top: 20px;
+              }
+          </style>
+      </head>
+      <body>
+          <div class="email-container">
+              <h2>Ninobyvani: Reset Password</h2>
+              <p>Dear user,</p>
+              <p>Thank you for resetting your password with Ninobyvani.</p>
+              
+              <p>Click on the following link to create a new password:</p>
+              <p><a class="link" href="${link}">Reset Password</a></p>
+              
+              <p>This link will expire in 2 minute.</p>
+              <p class="footer">This is a system-generated email. Please do not reply to this email ID.</p>
+              
+              <p class="footer">Warm Regards,<br>Customer Care<br>Ninobyvani</p>
+          </div>
+      </body>
+      </html>
+  `;
+            smtpTransport.sendMail(
+              {
+                from: process.env.MAIL_FROM,
+                to: email,
+                subject: "Ninobyvani: Reset Password",
+                html: emailContent,
+              },
+              function (error, info) {
+                if (error) {
+                  return reject({
+                    name: "NinobyvaniException",
+                    message: "Email Sending Failed",
+                    error: error,
+                  });
+                }
+                return resolve(true);
+              }
+            );
+          } else
+            throw {
+              name: "TilitsoException",
+              msg: "Email Body not available",
+            };
+        });
+      } catch (err) {
+        reject(err);
+      }
+    });
+  },
+
+
   //   successfullyRegister: async (email) => {
   //     try {
   //         const user = await db.customer.findOne({ where: { email: email } });

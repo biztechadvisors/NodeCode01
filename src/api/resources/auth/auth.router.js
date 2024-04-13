@@ -14,6 +14,8 @@ authRouter.route("/register").post(authController.addUser);
 
 authRouter.route("/user/getAllUserList").get(authController.getAllUserList);
 
+authRouter.route("/user/sendReset").post(authController.sendReset);
+
 authRouter.route("/user/update").post(authController.userUpdate);
 
 authRouter.route("/user/delete").post(authController.deleteUserList);

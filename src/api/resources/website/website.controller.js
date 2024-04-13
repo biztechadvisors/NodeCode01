@@ -225,7 +225,7 @@ module.exports = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
             category_name: value.maincat.name,
-            subCategorie_name: value.SubCategory.sub_name,
+            subCategorie_name: value.SubCategory?.sub_name,
             Name: value.name,
             Age: Array.from(variantMemory),
             PublishStatus: value.PubilshStatus,
