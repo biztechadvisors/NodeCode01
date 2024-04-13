@@ -1607,11 +1607,6 @@ module.exports = {
             model: db.ProductVariant,
             include: [
               {
-                model: db.ch_color_detail,
-                as: 'color',
-                attributes: ['id', 'TITLE', 'CODE'],
-              },
-              {
                 model: db.VariationOption,
                 as: 'variationOptions', // Use the correct alias here
                 attributes: ['name', 'value'],
@@ -1629,24 +1624,12 @@ module.exports = {
 
         for (const value of products.rows) {
           const imageList = value.productphotos.map((url) => url.imgUrl);
-          const variantColors = new Set();
-          const variantMemory = new Set();
+
+          // Moving the definition outside the loop
+          const variantAttributes = new Map();
 
           for (const variant of value.ProductVariants) {
-            if (variant.color) {
-              variantColors.add(variant.color.TITLE);
-            } else if (variant.colorId) {
-              const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-              if (chColorDetail) {
-                variantColors.add(chColorDetail.TITLE);
-              }
-            }
-            variantMemory.add(variant.memory);
-
-            // Adding variation options to the map
-            const variantAttributes = new Map();
-
-            for (const option of variant.variationOptions) { // Corrected this line
+            for (const option of variant.variationOptions) {
               if (!variantAttributes.has(option.name)) {
                 variantAttributes.set(option.name, new Set());
               }
@@ -1660,7 +1643,6 @@ module.exports = {
             category_name: value.maincat.name,
             subCategorie_name: value.SubCategory.sub_name,
             Name: value.name,
-            Age: Array.from(variantMemory),
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
@@ -1674,7 +1656,6 @@ module.exports = {
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
-            colorIds: Array.from(variantColors),
             Photo: imageList,
             Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
