@@ -158,61 +158,64 @@ updateOrdQuantityProd = async (ordProducts) => {
 
 module.exports = {
     //    Shiprocket -------------Start
+    // Modify the getOrderTracking function to handle Shiprocket webhook payload
     getOrderTracking: async (req, res, next) => {
         try {
-            const { shipment_id } = req.body;
-            console.log("shipment_id", shipment_id)
-            // Assuming db.Orders is your Sequelize model
-            const order = await db.Order.findOne({ where: { shipment_id: Number(shipment_id) } });
+            console.log('req.body**', req.body);
+            const { awb, order_id } = req.body; // Retrieve awb and order_id from request body
+            console.log("awb", awb);
+            console.log("order_id", order_id);
 
-            if (!order) {
-                return res.status(400).json({ success: false, message: 'Order not found' });
-            }
+            // if (!awb || !order_id) {
+            //     return res.status(400).json({ success: false, message: 'Missing awb or order_id' });
+            // }
 
-            // Assuming db.customer is your Sequelize model for customers
-            const customer = await db.customer.findOne({ where: { id: order.custId } });
-            const customer_email = customer?.dataValues?.email;
+            // // Assuming db.Orders is your Sequelize model
+            // const order = await db.Order.findOne({ where: { sr_order_id: order_id } });
 
-            console.log("customer_email", customer_email)
+            // if (!order) {
+            //     return res.status(400).json({ success: false, message: 'Order not found' });
+            // }
 
-            if (!customer_email) {
-                return res.status(400).json({ success: false, message: 'Missing customer_email' });
-            }
+            // // Assuming db.customer is your Sequelize model for customers
+            // const customer = await db.customer.findOne({ where: { id: order.custId } });
+            // const customer_email = customer?.dataValues?.email;
 
-            if (shipment_id) {
-                const trackingInfo = await shiprocketService.trackOrderByShipment_id(shipment_id);
-                console.log("trackingInfo", trackingInfo.tracking_data.track_status)
-                if (trackingInfo.tracking_data.track_status != 0) {
-                    const { awb_code } = trackingInfo.tracking_data[0];
-                    const trackingLink = `https://www.shiprocket.in/track/${awb_code}`;
-                }
+            // console.log("customer_email", customer_email);
 
-                let current_status = "processing"
-                let awb_code = "789847232"
-                let trackingLink = "www.google.com"
+            // if (!customer_email) {
+            //     return res.status(400).json({ success: false, message: 'Missing customer_email' });
+            // }
 
-                const htmlContent = `
-                <html>
-                <body>
-                    <p>Your order with tracking ID ${awb_code} has the following status:</p>
-                    <p>${current_status}</p>
-                    <p>You can track your order <a href="${trackingLink}">here</a>.</p>
-                    <p>If you have any questions or concerns, feel free to contact us at ninobyvani@gmail.com.</p>
-                    <p>Thank you for shopping with us!</p>
-                </body>
-                </html>`;
+            // // Assuming db.OrdersScans is your Sequelize model for order scans
+            // const scans = req.body.scans;
+            // console.log("scans", scans);
 
-                await mailer.sendOrderTrackingEmail(customer_email, htmlContent);
+            // let current_status = req.body.current_status;
 
-                res.status(200).json({ success: true, message: 'Order tracking email sent successfully' });
-            } else {
-                res.status(400).json({ success: false, message: 'Missing shipment_id' });
-            }
+            // // Construct the trackingLink based on the provided data
+            // let trackingLink = `https://www.shiprocket.in/track/${awb}`;
+
+            // const htmlContent = `
+            //     <html>
+            //     <body>
+            //         <p>Your order with tracking ID ${awb} has the following status:</p>
+            //         <p>${current_status}</p>
+            //         <p>You can track your order <a href="${trackingLink}">here</a>.</p>
+            //         <p>If you have any questions or concerns, feel free to contact us at ninobyvani@gmail.com.</p>
+            //         <p>Thank you for shopping with us!</p>
+            //     </body>
+            //     </html>`;
+
+            // await mailer.sendOrderTrackingEmail(customer_email, htmlContent);
+
+            res.status(200).json({ success: true, message: 'Order tracking email sent successfully' });
         } catch (error) {
             console.error('Error retrieving or sending order tracking:', error);
             res.status(500).json({ success: false, message: 'Error retrieving or sending order tracking' });
         }
     },
+
 
 
     async calculateShippingCost(req, res) {
@@ -525,7 +528,6 @@ module.exports = {
                                 ]
                             }
                         ],
-                        // Use separate subquery to filter based on status from cart_detail table
                         where: req.body.status ? { status: req.body.status } : {}
                     },
                     { model: db.customer, as: "user", attributes: ["id", "email"] },
@@ -533,18 +535,15 @@ module.exports = {
                 ]
             };
 
-            // if (req.body.searchString) {
-            //     query.where.number = {
-            //         [Op.like]: req.body.searchString
-            //     };
-            // }
-
             const limit = req.body.limit ? Number(req.body.limit) : 10;
             const page = req.body.page ? Number(req.body.page) : 1;
-            query.offset = (page - 1) * limit;
+            const offset = (page - 1) * limit;
+
+            query.offset = offset;
             query.limit = limit;
 
             const orderList = await db.Order.findAndCountAll(query);
+
             if (orderList) {
                 orderList.rows.forEach((value) => {
                     const dataList = {
@@ -567,9 +566,6 @@ module.exports = {
                     arrData.push(dataList);
                 });
 
-                // console.log("Data", req.body.searchString);
-                // console.log("Data", arrData)
-
                 let filteredData = arrData;
                 if (req.body.searchString) {
                     const Keys = ["payment", "OrderNo", "CustomerName", "OrderDate", "shipping", "phone", "order_Id", "id"];
@@ -581,7 +577,7 @@ module.exports = {
                     );
                 }
 
-                let pages = Math.ceil(orderList.count / limit);
+                const pages = Math.ceil(orderList.count / limit);
                 const finalResult = {
                     count: orderList.count,
                     pages: pages,
@@ -601,6 +597,7 @@ module.exports = {
             res.status(500).json({ errors: "" + err });
         }
     },
+
 
     async statusUpdate(req, res, next) {
         try {

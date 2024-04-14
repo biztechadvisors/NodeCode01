@@ -49,10 +49,6 @@ module.exports = {
         });
 
         // Add columns to the 'ProductVariants' table
-        await queryInterface.addColumn('ProductVariants', 'ColorId', {
-          type: Sequelize.INTEGER,
-          allowNull: true
-        });
         await queryInterface.addColumn('ProductVariants', 'BrandId', {
           type: Sequelize.INTEGER,
           allowNull: true
@@ -111,7 +107,6 @@ module.exports = {
       await queryInterface.removeColumn('products', 'PublishStatus');
       await queryInterface.removeColumn('products', 'ShippingDays');
       await queryInterface.removeColumn('products', 'HighlightDetail');
-      await queryInterface.removeColumn('ProductVariants', 'ColorId');
       await queryInterface.removeColumn('ProductVariants', 'BrandId');
       await queryInterface.removeColumn('ProductVariants', 'LongDescription');
       await queryInterface.removeColumn('ProductVariants', 'ShortDescription');

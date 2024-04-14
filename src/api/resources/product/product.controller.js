@@ -144,12 +144,6 @@ module.exports = {
 
           if (Array.isArray(productVariants)) {
             const priceEntries = await Promise.all(productVariants.map(async (variant) => {
-              let color = null;
-
-              if (variant.color) {
-                color = await db.ch_color_detail.findOne({ where: { TITLE: variant.color } }).catch(() => null);
-              }
-              const colorId = color ? color.id : null; // Use the retrieved color ID or null if it is not defined
 
               return {
                 productId: product.id,
@@ -164,13 +158,11 @@ module.exports = {
                 sellerPrice: variant.sellerPrice,
                 unitSize: variant.unitSize,
                 qty: variant.qty,
-                colorId: colorId, // Use the retrieved color ID or null if it is not defined
                 discountPer: variant.discountPer,
                 discount: variant.discount,
                 total: variant.total,
                 netPrice: variant.netPrice,
                 interface: variant.interface,
-                memory: variant.memory,
                 qtyWarning: variant.qtyWarning,
                 youTubeUrl: variant.youTubeUrl,
                 COD: variant.COD,
@@ -260,9 +252,7 @@ module.exports = {
                 actualPrice: variant.actualPrice || 0,
                 distributorPrice: variant.distributorPrice || 0,
                 buyerPrice: variant.buyerPrice || 0,
-                memory: variant.memory || "",
                 qty: variant.qty || 0,
-                colorId: variant.attribute.Color || null,
                 discountPer: variant.discountPer || 0,
                 discount: variant.discount || 0,
                 netPrice: variant.netPrice || 0,
@@ -526,7 +516,6 @@ module.exports = {
             actualPrice: variant.actualPrice || 0,
             distributorPrice: variant.distributorPrice || 0,
             buyerPrice: variant.buyerPrice || 0,
-            memory: variant.memory || "",
             qty: variant.qty || 0,
             qtyWarning: variant.qtyWarning || 0,
             discountPer: variant.discountPer || 0,
@@ -545,7 +534,6 @@ module.exports = {
             actualPrice: variant.actualPrice || 0,
             distributorPrice: variant.distributorPrice || 0,
             buyerPrice: variant.buyerPrice || 0,
-            memory: variant.memory || "",
             qty: variant.qty || 0,
             qtyWarning: variant.qtyWarning || 0,
             discountPer: variant.discountPer || 0,
@@ -1890,161 +1878,7 @@ module.exports = {
       res.status(500).json({ success: false, error: err });
     }
   },
-  // color details
-  async createColorDetails(req, res, next) {
-    try {
-      const { name } = req.body;
 
-      // console.log(name);
-
-      const nextId = await db.ch_color_detail.max('id') + 1;
-      // console.log("Next ID:", nextId);
-
-
-      const list = await db.ch_color_detail.findOne({ where: { TITLE: name } });
-      if (!list) {
-        await db.ch_color_detail.create({
-          TITLE: name,
-          STATUS: 1,
-          CODE: nextId,
-          thumbnail: req.file ? req.file.location : data.thumbnail,
-        });
-      }
-
-      res.status(200).json({ status: 200, message: "Successfully added to the list" });
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async updateColorDetails(req, res, next) {
-    try {
-      const { id, name, thumbnail } = req.body;
-      db.ch_color_detail
-        .findOne({ where: { id: id } })
-        .then((data) => {
-          if (data) {
-            return db.ch_color_detail.update(
-              {
-                TITLE: name ? name : data.name,
-                thumbnail: req.file ? req.file.location : data.thumbnail,
-              },
-              { where: { id: data.id } }
-            );
-          }
-          throw new RequestError("color is not found");
-        })
-        .then((category) => {
-          var response = Util.getFormatedResponse(false, {
-            message: "Successfully Updated",
-          });
-          res.status(response.code).json(response);
-        })
-        .catch(function (err) {
-          next(err);
-        });
-    } catch (err) {
-      throw new RequestError(err);
-    }
-  },
-  async getColorList(req, res, next) {
-    const { search_text } = req.body;
-    let limit = 20;
-    let offset = 0;
-    let page = 1;
-    if (req.body.limit != undefined) {
-      limit = parseInt(req.body.limit);
-    }
-    if (req.body.page) {
-      page = req.body.page;
-      if (page < 1) page = 1;
-    }
-    try {
-      let whereCond = {};
-      if (search_text) {
-        whereCond = {
-          TITLE: {
-            [Op.like]: "%" + search_text + "%",
-          },
-        };
-      }
-      db.ch_color_detail
-        .count({ where: whereCond, order: [["createdAt", "DESC"]] })
-        .then((count) => {
-          let pages = Math.ceil(count / limit);
-          offset = limit * (page - 1);
-          return db.ch_color_detail
-            .findAll({
-              where: whereCond,
-              order: [["createdAt", "DESC"]],
-              order: [
-                ["id", "DESC"],
-                ["TITLE", "ASC"],
-              ],
-              limit: limit,
-              offset: offset,
-            })
-            .then((r) => [r, pages, count]);
-        })
-        .then(([list, pages, count]) => {
-          res.status(200).json({
-            status: 200,
-            data: list,
-            count: count,
-            pages: pages,
-            page: req.body.page,
-          });
-        })
-        .catch(function (err) {
-          next(err);
-        });
-    } catch (err) {
-      throw new RequestError(err);
-    }
-  },
-  async deleteColorById(req, res, next) {
-    try {
-      const { id } = req.query;
-      db.ch_color_detail
-        .findOne({ where: { id: id } })
-        .then((data) => {
-          if (data) {
-            return db.ch_color_detail.destroy({ where: { id: id } });
-          }
-          throw new RequestError("data is not found");
-        })
-        .then((success) => {
-          res.status(200).json({
-            status: 200,
-            success: true,
-            message: "Successflly deleted",
-          });
-        });
-    } catch (err) {
-      throw new RequestError(err);
-    }
-  },
-  async productColourList(req, res, next) {
-    try {
-      db.ch_color_detail
-        .findAll({
-          where: { STATUS: true },
-        })
-        .then((success) => {
-          res.status(200).json({
-            status: 200,
-            success: true,
-            message: "Successflly",
-            data: success,
-          });
-        })
-        .catch((err) => {
-          throw new RequestError(err);
-        });
-    } catch (err) {
-      throw new RequestError(err);
-    }
-  },
   async getTag(req, res, next) {
     let limit = 40;
     let page = 1;

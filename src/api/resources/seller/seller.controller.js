@@ -186,9 +186,6 @@ module.exports = {
                     ? priceDetails[i].unitSize
                     : 0,
                   qty: priceDetails[i].qty ? priceDetails[i].qty : 0,
-                  colorId: priceDetails[i].colorId
-                    ? priceDetails[i].colorId
-                    : null,
                   brandId: priceDetails[i].brandId
                     ? priceDetails[i].brandId
                     : null,
@@ -208,9 +205,6 @@ module.exports = {
                     : null,
                   osType: priceDetails[i].os_type
                     ? priceDetails[i].os_type
-                    : null,
-                  memory: priceDetails[i].memory
-                    ? priceDetails[i].memory
                     : null,
                   internationalWarranty: priceDetails[i].internationalWarranty
                     ? priceDetails[i].internationalWarranty
@@ -244,9 +238,6 @@ module.exports = {
                     : null,
                   laptopType: priceDetails[i].laptopType
                     ? priceDetails[i].laptopType
-                    : null,
-                  graphicsMemory: priceDetails[i].graphicsMemory
-                    ? priceDetails[i].graphicsMemory
                     : null,
                   osVersion: priceDetails[i].osVersion
                     ? priceDetails[i].osVersion
@@ -323,11 +314,6 @@ module.exports = {
             model: db.collection,
             as: "brand",
             attributes: ["id", "name"],
-          },
-          {
-            model: db.ch_color_detail,
-            as: "color",
-            attributes: ["id", "TITLE", "CODE"],
           },
         ],
       },
@@ -501,46 +487,13 @@ module.exports = {
                   netPrice: netPrice,
                   unitSize: priceDetails[i].unitSize,
                   qty: priceDetails[i].qty,
-                  colorId: priceDetails[i].colorId,
                   brandId: priceDetails[i].brandId,
                   youTubeUrl: priceDetails[i].youTubeUrl,
                   stockType: priceDetails[i].stockType,
                   refundable: priceDetails[i].refundable,
                   qtyWarning: priceDetails[i].qtyWarning,
                   COD: priceDetails[i].COD,
-                  networkType: priceDetails[i].networkType,
-                  modelYear: priceDetails[i].modelYear,
-                  osType: priceDetails[i].osType,
-                  memory: priceDetails[i].memory,
                   internationalWarranty: priceDetails[i].internationalWarranty,
-                  screenSize: priceDetails[i].screenSize,
-                  batteryCapacity: priceDetails[i].batteryCapacity,
-                  primaryCamera: priceDetails[i].primaryCamera,
-                  secondaryCamera: priceDetails[i].secondaryCamera,
-                  simCount: priceDetails[i].simCount,
-                  interface: priceDetails[i].interface,
-                  compatibility: priceDetails[i].compatibility,
-                  storageSize: priceDetails[i].storageSize
-                    ? priceDetails[i].storageSize
-                    : null,
-                  storageType: priceDetails[i].storageType
-                    ? priceDetails[i].storageType
-                    : null,
-                  laptopType: priceDetails[i].laptopType
-                    ? priceDetails[i].laptopType
-                    : null,
-                  graphicsMemory: priceDetails[i].graphicsMemory
-                    ? priceDetails[i].graphicsMemory
-                    : null,
-                  osVersion: priceDetails[i].osVersion
-                    ? priceDetails[i].osVersion
-                    : null,
-                  displayResolutionType: priceDetails[i].displayResolutionType
-                    ? priceDetails[i].displayResolutionType
-                    : null,
-                  processorId: priceDetails[i].processorId
-                    ? priceDetails[i].processorId
-                    : null,
                 });
               }
               if (priceEntries.length)
@@ -987,11 +940,6 @@ module.exports = {
             { model: db.SubCategory, attributes: ["id", "sub_name"] },
           ],
         },
-        {
-          model: db.ch_color_detail,
-          as: "color",
-          attributes: ["id", "TITLE", "CODE"],
-        },
         { model: db.productphoto, attributes: ["id", "imgUrl"] },
       ];
       const productlist = await db.ProductVariant.findAndCountAll(query);
@@ -1118,11 +1066,6 @@ module.exports = {
                 model: db.VariationOption, // Include VariationOption model
                 as: 'variationOptions', // Set the alias
                 attributes: ['name', 'value'],
-              },
-              {
-                model: db.ch_color_detail,
-                as: "color",
-                attributes: ["id", "TITLE", "CODE"],
               },
             ],
           },

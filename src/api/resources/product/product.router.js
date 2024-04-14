@@ -160,33 +160,6 @@ productRouter.route('/seo-create').post(
   productController.seoDetailsList
 );
 
-productRouter.route('/color/create').post(
-  upload.single('thumbnail'),
-
-  productController.createColorDetails
-);
-
-productRouter.route('/color-update').post(
-  upload.single('thumbnail'),
-
-  productController.updateColorDetails
-);
-
-productRouter.route('/color/list').post(
-
-  productController.getColorList
-);
-
-productRouter.route('/color/delete').delete(
-
-  productController.deleteColorById
-);
-
-productRouter.route('/color/list').get(
-
-  productController.productColourList
-);
-
 productRouter.route('/getAllList').get(
 
   productController.getProductForFlash

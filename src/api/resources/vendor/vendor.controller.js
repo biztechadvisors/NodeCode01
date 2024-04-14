@@ -80,11 +80,6 @@ module.exports = {
             as: "brand",
             attributes: ["id", "name", "slug"],
           },
-          {
-            model: db.ch_color_detail,
-            as: "color",
-            attributes: ["id", "TITLE", "CODE"],
-          },
           { model: db.productphoto, attributes: ["id", "imgUrl"] },
         ];
         const productlist = await db.ProductVariant.findAndCountAll({

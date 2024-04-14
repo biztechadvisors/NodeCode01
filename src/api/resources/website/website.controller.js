@@ -176,11 +176,6 @@ module.exports = {
             model: db.ProductVariant,
             include: [
               {
-                model: db.ch_color_detail,
-                as: 'color',
-                attributes: ['id', 'TITLE', 'CODE'],
-              },
-              {
                 model: db.VariationOption,
                 as: 'variationOptions',
                 attributes: ['name', 'value'],
@@ -197,21 +192,9 @@ module.exports = {
         const arrData = [];
 
         for (const value of products.rows) {
-          const variantColors = new Set();
-          const variantMemory = new Set();
           const variantAttributes = new Map(); // Define variantAttributes outside the loop
 
           for (const variant of value.ProductVariants) {
-            if (variant.color) {
-              variantColors.add(variant.color.TITLE);
-            } else if (variant.colorId) {
-              const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-              if (chColorDetail) {
-                variantColors.add(chColorDetail.TITLE);
-              }
-            }
-            variantMemory.add(variant.memory);
-
             // Adding variation options to the map
             for (const option of variant.variationOptions) {
               if (!variantAttributes.has(option.name)) {
@@ -227,7 +210,6 @@ module.exports = {
             category_name: value.maincat.name,
             subCategorie_name: value.SubCategory?.sub_name,
             Name: value.name,
-            Age: Array.from(variantMemory),
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
@@ -241,7 +223,6 @@ module.exports = {
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             badges: 'new',
-            colorIds: Array.from(variantColors),
             Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
           arrData.push(dataList);
@@ -288,11 +269,6 @@ module.exports = {
             model: db.ProductVariant,
             include: [
               {
-                model: db.ch_color_detail,
-                as: "color",
-                attributes: ["id", "TITLE", "CODE", "thumbnail"],
-              },
-              {
                 model: db.VariationOption, // Include VariationOption model
                 attributes: ["name", "value"],
                 as: "variationOptions", // Set the alias
@@ -328,22 +304,8 @@ module.exports = {
       if (product) {
         const imageList = product.productphotos.map((url) => url.imgUrl);
         const variants = product.ProductVariants;
-        const colorArr = [];
-        const internal_memory = [];
 
         variants.forEach((variant) => {
-          if (variant.color) { // Check if variant.color is not undefined
-            colorArr.push({
-              id: variant.color.id,
-              TITLE: variant.color.TITLE,
-              CODE: variant.color.CODE,
-              thumbnail: variant.color.thumbnail,
-            });
-          }
-
-          if (variant.memory != null) {
-            internal_memory.push({ id: variant.memory });
-          }
 
         });
 
@@ -366,9 +328,7 @@ module.exports = {
             SortDesc: variant.shortDesc,
             LongDesc: variant.longDesc,
             HighLightDetail: variant.product.HighLightDetail,
-            colorList: uniqueArr(colorArr),
             Specification: variant.product.ch_specifications,
-            memory: variant.memory,
             // Add Variation Options
             variationOptions: variant.variationOptions.map((option) => ({
               name: option.name,
@@ -417,11 +377,6 @@ module.exports = {
             {
               model: db.ProductVariant,
               include: [
-                {
-                  model: db.ch_color_detail,
-                  as: "color",
-                  attributes: ["id", "TITLE", "CODE"],
-                },
                 { model: db.productphoto, attributes: ["id", "imgUrl"] },
               ],
             },
@@ -478,11 +433,6 @@ module.exports = {
             {
               model: db.ProductVariant,
               include: [
-                {
-                  model: db.ch_color_detail,
-                  as: "color",
-                  attributes: ["id", "TITLE", "CODE"],
-                },
                 { model: db.productphoto, attributes: ["id", "imgUrl"] },
               ],
             },
@@ -665,8 +615,6 @@ module.exports = {
               "netPrice",
               "discount",
               "discountPer",
-              "memory",
-              "colorId",
               "productCode",
               "shortDesc",
               "longDesc",
@@ -711,23 +659,6 @@ module.exports = {
           productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
           badges: 'new',
           Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
-          colorIds: value.ProductVariants.reduce((acc, variant) => {
-            if (variant.color && variant.color.id) {
-              acc.push(variant.color.id);
-            } else if (variant.colorId) {
-              acc.push(variant.colorId);
-            }
-            return acc;
-          }, []),
-          Age: value.ProductVariants.reduce((acc, variant) => {
-            if (variant.variationOptions && variant.variationOptions.length > 0) {
-              const ageOption = variant.variationOptions.find(opt => opt.name === 'Age');
-              if (ageOption) {
-                acc.push(ageOption.value);
-              }
-            }
-            return acc;
-          }, []),
           Attributes: value.ProductVariants.reduce((acc, variant) => {
             if (variant.variationOptions && variant.variationOptions.length > 0) {
               variant.variationOptions.forEach(option => {
@@ -773,24 +704,21 @@ module.exports = {
       console.log("catch error", err);
       throw new RequestError(err);
     }
-  }
-
-  ,
+  },
 
   async getFilterAllCategoryBrand(req, res, next) {
     const { queryString } = req.query;
-    let ColorData = [];
-    let internalMemoryData = [];
-    let interfaceData = [];
     const query = {};
     query.where = {};
     try {
       let search = "%%";
       if (queryString) {
-        search = "%" + queryString + "%";
+        search = `%${queryString}%`;
       }
-      // console.log("search", search)
-      let result = {};
+
+      const result = {};
+
+      // Fetch main categories and associated subcategories
       result.maincat = await db.category.findAll({
         attributes: ["id", "name", "slug", "title", "keyword", "desc"],
         where: {
@@ -799,11 +727,10 @@ module.exports = {
             { name: { [Op.like]: search } },
           ],
         },
-        include: [
-          { model: db.SubCategory, attributes: ["id", "sub_name", "slug"] },
-        ],
+        include: [{ model: db.SubCategory, attributes: ["id", "sub_name", "slug"] }],
       });
-      // console.log("first")
+
+      // Fetch subcategories and associated subchild categories
       result.subcat = await db.SubCategory.findAll({
         where: {
           [Op.or]: [
@@ -811,220 +738,51 @@ module.exports = {
             { sub_name: { [Op.like]: search } },
           ],
         },
-        include: [
-          {
-            model: db.SubChildCategory,
-            attributes: ["id", "name", "slug"],
-          },
-        ],
+        include: [{ model: db.SubChildCategory, attributes: ["id", "name", "slug"] }],
       });
-      // console.log("second")
-      query.include = [
+
+      // Set up query for fetching products
+      query.include = [{ model: db.ProductVariant }];
+
+      let product;
+      if (result.maincat.length > 0) {
+        const maincatIds = result.maincat.map(cat => cat.id);
+        query.where.categoryId = { [Op.in]: maincatIds };
+        query.where.PubilshStatus = "Published";
+        product = await db.product.findAll({ ...query });
+      } else if (result.subcat.length > 0) {
+        const subcatIds = result.subcat.map(cat => cat.id);
+        query.where.subcategoryId = { [Op.in]: subcatIds };
+        query.where.PubilshStatus = "Published";
+        product = await db.product.findAll({ ...query });
+      }
+
+      // Prepare filters
+      const filters = [
         {
-          model: db.ProductVariant,
-          include: [
-            {
-              model: db.ch_color_detail,
-              as: "color",
-              attributes: ["id", "TITLE", "CODE"],
-            },
-          ],
+          type: "category",
+          slug: "category",
+          name: "Categories",
+          checkVal: result.maincat.length,
+          items: result.maincat,
+        },
+        {
+          type: "range",
+          slug: "price",
+          name: "Price",
+          min: 0,
+          max: 100000,
+          value: [0, 100000],
         },
       ];
-      // console.log("query")
-      if (result.maincat.length) {
-        const ids = result.maincat[0].id;
-        // console.log("id-maincat")
-        query.where.categoryId = {
-          [Op.in]: [ids],
-        };
-        query.where.PubilshStatus = {
-          [Op.eq]: "Published",
-        };
-        let product = await db.product.findAll({ ...query });
-        let productVariantsData = {};
-        if (product) {
-          product.forEach((value) => {
-            if (value.ProductVariants && value.ProductVariants.length) {
-              value.ProductVariants.forEach((variant) => {
-                const color = variant.color ? variant.color : null;
-                const internalMemoryList = variant.memory ? variant.memory : null;
-                const interfaceList = variant.interface ? variant.interface : null;
-                ColorData.push(color);
-                internalMemoryData.push({ id: internalMemoryList });
-                interfaceData.push({ id: interfaceList });
-              });
-            }
-          });
-          let checkEmptyColor = ColorData.filter(function (e) {
-            return e != null;
-          });
-          let checkEmptyInternalMemory = checkEmpty(internalMemoryData);
-          let checkEmptyInterface = checkEmpty(interfaceData);
 
-          const finalColor = checkEmptyColor.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-          const finalInternalMemory = checkEmptyInternalMemory.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-
-          const finalInterface = checkEmptyInterface.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-          const filters = [
-            {
-              type: "category",
-              slug: "category",
-              name: "Categories",
-              checkVal: result.maincat.length,
-              items: result.maincat,
-            },
-            {
-              type: "color",
-              slug: "color",
-              checkVal: finalColor.length,
-              name: "Color",
-              items: finalColor,
-            },
-            {
-              type: "check",
-              slug: "memory",
-              name: "Internal Memory",
-              checkVal: finalInternalMemory.length,
-              items: finalInternalMemory,
-            },
-            {
-              type: "check",
-              slug: "interface",
-              name: "Interface",
-              checkVal: finalInterface.length,
-              items: finalInterface,
-            },
-            {
-              type: "range",
-              slug: "price",
-              name: "Price",
-              min: 0,
-              max: 100000,
-              value: [0, 100000],
-            },
-          ];
-          let response = Util.getFormatedResponse(false, filters, {
-            message: "Success",
-          });
-          res.status(response.code).json(response);
-        }
-      } else if (result.subcat.length) {
-        const ids = result.subcat[0].id;
-        // console.log("id-subcat")
-        query.where.subcategoryId = {
-          [Op.in]: [ids],
-        };
-        query.where.PubilshStatus = {
-          [Op.eq]: "Published",
-        };
-        let product = await db.product.findAll({ ...query });
-        if (product) {
-          product.forEach((value) => {
-            const color = value.ProductVariants[0]
-              ? value.ProductVariants[0].color
-              : null;
-            const internalMemoryList = value.ProductVariants[0]
-              ? value.ProductVariants[0].memory
-              : null;
-            const interfaceList = value.ProductVariants[0]
-              ? value.ProductVariants[0].interface
-              : null;
-            ColorData.push(color);
-            internalMemoryData.push({ id: internalMemoryList });
-            interfaceData.push({ id: interfaceList });
-          });
-          let checkEmptyColor = ColorData.filter(function (e) {
-            return e != null;
-          });
-          let checkEmptyInternalMemory = checkEmpty(internalMemoryData);
-          let checkEmptyInterface = checkEmpty(interfaceData);
-          const finalColor = checkEmptyColor.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-          const finalInternalMemory = checkEmptyInternalMemory.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-
-          const finalInterface = checkEmptyInterface.reduce((unique, o) => {
-            if (!unique.some((obj) => obj.id === o.id)) {
-              unique.push(o);
-            }
-            return unique;
-          }, []);
-
-          const filters = [
-            {
-              type: "category",
-              slug: "category",
-              name: "Categories",
-              checkVal: result.maincat.length,
-              items: result.maincat,
-            },
-            {
-              type: "color",
-              slug: "color",
-              checkVal: finalColor.length,
-              name: "Color",
-              items: finalColor,
-            },
-            {
-              type: "check",
-              slug: "memory",
-              name: "Internal Memory",
-              checkVal: finalInternalMemory.length,
-              items: finalInternalMemory,
-            },
-            {
-              type: "check",
-              slug: "interface",
-              name: "Interface",
-              checkVal: finalInterface.length,
-              items: finalInterface,
-            },
-            {
-              type: "range",
-              slug: "price",
-              name: "Price",
-              min: 0,
-              max: 100000,
-              value: [0, 100000],
-            },
-          ];
-          let response = Util.getFormatedResponse(false, filters, {
-            message: "Success",
-          });
-          res.status(response.code).json(response);
-        }
-      } else {
-        let response = Util.getFormatedResponse(false, {
-          message: "No data found",
-        });
-        res.status(response.code).json(response);
-      }
-    } catch (err) {
-      throw new RequestError(err);
+      // Prepare response
+      const response = Util.getFormatedResponse(false, filters, { message: "Success" });
+      res.status(response.code).json(response);
+    } catch (error) {
+      console.error('Error in getFilterAllCategoryBrand:', error);
+      const response = Util.getFormatedResponse(true, null, { message: "Error retrieving filter data" });
+      res.status(response.code).json(response);
     }
   },
 
@@ -1049,7 +807,6 @@ module.exports = {
                 { slug: { [Op.startsWith]: word } },
                 { '$ProductVariants.slug$': { [Op.startsWith]: word } },
                 { '$ProductVariants.productName$': { [Op.startsWith]: word } },
-                { '$ProductVariants.memory$': { [Op.startsWith]: word } },
                 { '$ProductVariants.netPrice$': { [Op.startsWith]: word } },
                 { '$ProductVariants.actualPrice$': { [Op.startsWith]: word } },
                 { '$ProductVariants.shortDesc$': { [Op.startsWith]: word } },
@@ -1074,20 +831,12 @@ module.exports = {
               "netPrice",
               "discount",
               "discountPer",
-              "memory",
-              "colorId",
               "productCode",
             ],
             include: [
               {
                 model: db.VariationOption,
                 attributes: ["name", "value"],
-                where: {
-                  name: 'color',
-                  value: {
-                    [Op.or]: searchWords.map(word => ({ [Op.like]: `%${word}%` }))
-                  }
-                }
               },
               {
                 model: db.productphoto,
@@ -1112,19 +861,9 @@ module.exports = {
         const arrData = [];
 
         for (const value of productResults.rows) {
-          const variantColors = new Set();
-          const variantMemory = new Set();
 
           for (const variant of value.ProductVariants) {
-            if (variant.color) {
-              variantColors.add(variant.color.TITLE);
-            } else if (variant.colorId) {
-              const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-              if (chColorDetail) {
-                variantColors.add(chColorDetail.TITLE);
-              }
-            }
-            variantMemory.add(variant.memory);
+
           }
 
           const dataList = {
@@ -1133,7 +872,6 @@ module.exports = {
             category_name: value.maincat.name,
             subCategorie_name: value.SubCategory.sub_name,
             Name: value.name,
-            Age: Array.from(variantMemory),
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
@@ -1146,7 +884,6 @@ module.exports = {
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
-            colorIds: Array.from(variantColors),
           };
           arrData.push(dataList);
         }
@@ -1340,11 +1077,7 @@ module.exports = {
             {
               model: db.ProductVariant,
               include: [
-                {
-                  model: db.ch_color_detail,
-                  as: 'color',
-                  attributes: ['id', 'TITLE', 'CODE'],
-                },
+
               ],
             },
             { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
@@ -1355,19 +1088,9 @@ module.exports = {
 
         const arrData = [];
         for (const value of finalResult.rows) {
-          const variantColors = new Set();
-          const variantMemory = new Set();
 
           for (const variant of value.ProductVariants) {
-            if (variant.color) {
-              variantColors.add(variant.color.TITLE);
-            } else if (variant.colorId) {
-              const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-              if (chColorDetail) {
-                variantColors.add(chColorDetail.TITLE);
-              }
-            }
-            variantMemory.add(variant.memory);
+
           }
 
           const dataList = {
@@ -1376,7 +1099,6 @@ module.exports = {
             category_name: value.maincat.name,
             subCategorie_name: value.SubCategory.sub_name,
             Name: value.name,
-            Age: Array.from(variantMemory),
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
@@ -1389,11 +1111,9 @@ module.exports = {
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
-            colorIds: Array.from(variantColors),
           };
           arrData.push(dataList);
         }
-
         // console.log("arrData", arrData)
 
         const startIndex = (page - 1) * limit;
@@ -1721,10 +1441,6 @@ module.exports = {
               qty: value.qty,
               size: value.varient ? value.varient.unitSize : null,
               total: value.varient ? value.qty * value.varient.netPrice : null,
-              // brand:
-              //   value.varient && value.varient.brand
-              //     ? value.varient.brand.name
-              //     : null,
               status: value.status,
             };
             arrData.push(dataList);
@@ -1894,584 +1610,253 @@ module.exports = {
   },
 
   async allEvent(req, res) {
-
     try {
-
       const { query, ...filters } = req.query;
-
       const limit = parseInt(req.query.limit) || 10;
-
       const page = Math.max(1, parseInt(req.query.page)) || 1;
-
-
-
       const whereCond0 = {
-
         PubilshStatus: 'Published',
 
       };
-
       const whereCond = {};
-
-
-
       if (query) {
-
-
-
         const searchWords = query ? query.split(' ') : [];
-
-
-
         const productResults = await db.product.findAndCountAll({
-
           where: {
-
             [Op.or]: [
-
               ...searchWords.map((word) => ({
-
                 [Op.or]: [
-
                   { name: { [Op.like]: `%${word}%` } },
-
                   { slug: { [Op.like]: `%${word}%` } },
-
                 ],
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$ProductVariants.slug$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$ProductVariants.productName$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
-                '$ProductVariants.memory$': { [Op.like]: `%${word}%` },
-
-              })),
-
-              ...searchWords.map((word) => ({
-
                 '$ProductVariants.netPrice$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$ProductVariants.actualPrice$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$ProductVariants.shortDesc$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$ProductVariants.longDesc$': { [Op.like]: `%${word}%` },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$maincat.slug$': { [Op.substring]: word },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$maincat.name$': { [Op.substring]: word },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$SubCategory.slug$': { [Op.substring]: word },
-
               })),
 
               ...searchWords.map((word) => ({
-
                 '$SubCategory.sub_name$': { [Op.substring]: word },
-
               })),
-
             ],
 
           },
 
           include: [
-
             {
-
               model: db.ProductVariant,
-
               attributes: [
-
                 "id",
-
                 "productName",
-
                 "qty",
-
                 "thumbnail",
-
                 "actualPrice",
-
                 "netPrice",
-
                 "discount",
-
                 "discountPer",
-
-                "memory",
-
-                "colorId",
-
                 "productCode",
-
               ],
 
               include: [
-
                 {
-
-                  model: db.ch_color_detail,
-
-                  as: 'color',
-
-                  attributes: ['id', 'TITLE', 'CODE'],
-
-                },
-
-                {
-
                   model: db.productphoto,
-
                   attributes: ["id", "imgUrl"]
-
                 }
-
               ],
-
             },
-
             {
-
               model: db.category,
-
               as: 'maincat',
-
               attributes: ['id', 'name'],
-
             },
-
             {
-
               model: db.SubCategory,
-
               attributes: ['id', 'sub_name'],
-
             },
-
           ],
-
           order: [['id', 'DESC']],
-
         });
 
-
-
         if (productResults.count > 0) {
-
           const arrData = [];
-
-
-
           for (const value of productResults.rows) {
-
-            const variantColors = new Set();
-
-            const variantMemory = new Set();
-
-
 
             for (const variant of value.ProductVariants) {
 
-              if (variant.color) {
-
-                variantColors.add(variant.color.TITLE);
-
-              } else if (variant.colorId) {
-
-                const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-
-                if (chColorDetail) {
-
-                  variantColors.add(chColorDetail.TITLE);
-
-                }
-
-              }
-
-              variantMemory.add(variant.memory);
-
             }
 
-
-
             const dataList = {
-
               id: value.id,
-
               variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
-
               category_name: value.maincat.name,
-
               subCategorie_name: value.SubCategory.sub_name,
-
               Name: value.name,
-
-              Age: Array.from(variantMemory),
-
               PublishStatus: value.PubilshStatus,
-
               HighLightDetail: value.HighLightDetail,
-
               slug: value.slug,
-
               Thumbnail: value.photo,
-
               actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
-
               netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
-
               discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
-
               discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-
               desc: value.desc,
-
               PubilshStatus: value.PubilshStatus,
-
               productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
-
               badges: 'new',
 
-              colorIds: Array.from(variantColors),
-
             };
-
             arrData.push(dataList);
-
           }
 
-
-
           const startIndex = (page - 1) * limit;
-
           const paginatedData = arrData.slice(startIndex, startIndex + limit);
-
-
-
           const response = Util.getFormatedResponse(false, {
-
             count: arrData.length,
-
             pages: Math.ceil(arrData.length / limit),
-
             items: paginatedData,
 
           }, {
-
             message: 'Success',
-
           });
 
-
-
           return res.status(response.code).json(response);
-
         } else {
-
           const response = Util.getFormatedResponse(false, {
-
             message: 'No data found',
-
           });
-
           return res.status(response.code).json(response);
-
         }
-
-
 
       } else {
 
-        if (filters.filter_memory) {
-
-          const memory = filters.filter_memory.split(',');
-
-          whereCond['$ProductVariants.memory$'] = { [Op.in]: memory };
-
-        }
-
         if (filters.filter_category) {
-
           const categories = filters.filter_category.split(',');
-
           const categoryIds = await db.category.findAll({
-
             attributes: ['id'],
-
             where: { slug: { [Op.in]: categories } },
-
             raw: true,
-
           });
-
           whereCond0.categoryId = { [Op.in]: categoryIds.map(({ id }) => id) };
-
         }
-
-
 
         if (filters.filter_SubCategory) {
-
           const subCategories = filters.filter_SubCategory.split(",");
-
           const subCategoryId = await db.SubCategory.findAll({
-
             attributes: ["id"],
-
             where: { slug: { [Op.in]: subCategories } },
-
             raw: true,
-
           });
 
           if (subCategoryId.length > 0) {
-
             whereCond0.subCategoryId = { [Op.in]: subCategoryId.map(({ id }) => id) };
-
           }
-
         }
-
-
-
-        if (filters.filter_color) {
-
-          const colors = filters.filter_color.split(",");
-
-          const colorOr = colors.map((color) => ({ [Op.like]: `%${color}%` }));
-
-          const colorsId = await db.ch_color_detail.findAll({
-
-            attributes: ["id"],
-
-            where: { TITLE: { [Op.or]: colorOr } },
-
-            raw: true,
-
-          });
-
-          if (colorsId.length > 0) {
-
-            whereCond.colorId = { [Op.in]: colorsId.map(({ id }) => id) };
-
-          }
-
-        }
-
-
 
         if (filters.filter_price) {
-
           const price = filters.filter_price.split("-");
-
           const startPrice = Number(price[0]);
-
           const endPrice = Number(price[1]);
-
           if (!isNaN(startPrice) && !isNaN(endPrice)) {
-
             whereCond['$ProductVariants.netPrice$'] = { [Op.between]: [startPrice, endPrice] };
-
           }
-
         }
-
       }
 
-
-
       const productResults = await db.product.findAndCountAll({
-
         where: whereCond0,
-
         include: [
-
           {
-
             model: db.ProductVariant,
-
             where: whereCond,
-
             as: 'ProductVariants',
-
             include: [
 
-              {
-
-                model: db.ch_color_detail,
-
-                as: 'color',
-
-                attributes: ['id', 'TITLE', 'CODE'],
-
-              },
-
             ],
-
           },
-
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-
           { model: db.SubCategory, attributes: ['id', 'sub_name'] },
-
         ],
 
         order: [['id', 'DESC']],
-
         limit,
-
         offset: (page - 1) * limit,
-
       });
-
-
 
       const formattedProducts = await Promise.all(productResults.rows.map(async (value) => {
 
-        const variantColors = new Set();
-
-        const variantMemory = new Set();
-
-
-
         for (const variant of value.ProductVariants) {
-
-          if (variant.color) {
-
-            variantColors.add(variant.color.TITLE);
-
-          } else if (variant.colorId) {
-
-            const chColorDetail = await db.ch_color_detail.findByPk(variant.colorId);
-
-            if (chColorDetail) {
-
-              variantColors.add(chColorDetail.TITLE);
-
-            }
-
-          }
-
-          variantMemory.add(variant.memory);
 
         }
 
-
-
         return {
-
           id: value.id,
-
           variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
-
           category_name: value.maincat.name,
-
           subCategorie_name: value.SubCategory.sub_name,
-
           Name: value.name,
-
-          Age: Array.from(variantMemory),
-
           PublishStatus: value.PubilshStatus,
-
           HighLightDetail: value.HighLightDetail,
-
           slug: value.slug,
-
           Thumbnail: value.photo,
-
           actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
-
           netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
-
           discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
-
           discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-
           desc: value.desc,
-
           PubilshStatus: value.PubilshStatus,
-
           productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
-
           badges: 'new',
-
-          colorIds: Array.from(variantColors),
 
         };
 
       }));
-
-
-
       const response = Util.getFormatedResponse(false, {
-
         count: productResults.count,
-
         pages: Math.ceil(productResults.count / limit),
-
         items: formattedProducts,
-
       }, {
-
         message: 'Success',
-
       });
 
-
-
       return res.status(response.code).json(response);
-
     } catch (err) {
-
       console.error(err);
-
       const response = Util.getFormatedResponse(false, { message: err.message });
-
       return res.status(response.code).json(response);
-
     }
-
   }
-
-
 
 };
 

@@ -56,61 +56,6 @@ module.exports = (sequelize, DataTypes) => {
       slug: {
         type: DataTypes.STRING,
       },
-
-      networkType: {
-        type: DataTypes.STRING,
-      },
-      modelYear: {
-        type: DataTypes.STRING,
-      },
-      osType: {
-        type: DataTypes.STRING,
-      },
-      memory: {
-        type: DataTypes.STRING,
-      },
-      screenSize: {
-        type: DataTypes.STRING,
-      },
-      batteryCapacity: {
-        type: DataTypes.STRING,
-      },
-      primaryCamera: {
-        type: DataTypes.STRING,
-      },
-      secondaryCamera: {
-        type: DataTypes.STRING,
-      },
-      simCount: {
-        type: DataTypes.STRING,
-      },
-      interface: {
-        type: DataTypes.STRING,
-      },
-      compatibility: {
-        type: DataTypes.STRING,
-      },
-      storageSize: {
-        type: DataTypes.INTEGER,
-      },
-      storageType: {
-        type: DataTypes.INTEGER,
-      },
-      laptopType: {
-        type: DataTypes.INTEGER,
-      },
-      graphicsMemory: {
-        type: DataTypes.INTEGER,
-      },
-      osVersion: {
-        type: DataTypes.INTEGER,
-      },
-      displayResolutionType: {
-        type: DataTypes.INTEGER,
-      },
-      processorId: {
-        type: DataTypes.INTEGER,
-      },
       Available: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
@@ -120,9 +65,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING(10),
         unique: true,
       },
-      colorId: {
-        type: DataTypes.INTEGER,
-      },
+
       brandId: {
         type: DataTypes.INTEGER,
       },
@@ -163,17 +106,6 @@ module.exports = (sequelize, DataTypes) => {
     });
     models.ProductVariant.hasMany(models.productphoto, {
       foreignKey: "varientId",
-    });
-
-    models.ProductVariant.hasOne(models.ch_color_detail, {
-      foreignKey: "id",
-      sourceKey: "colorId",
-      as: "color",
-    });
-    models.ProductVariant.hasOne(models.processor, {
-      foreignKey: "id",
-      sourceKey: "processorId",
-      as: "processor",
     });
 
     models.ProductVariant.hasMany(models.VariationOption, {
