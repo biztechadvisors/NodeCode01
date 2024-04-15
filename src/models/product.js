@@ -12,6 +12,11 @@ module.exports = (sequelize, DataTypes) => {
       brandId: DataTypes.INTEGER,
       status: DataTypes.STRING,
       photo: DataTypes.STRING,
+      referSizeChart: {
+        type: DataTypes.STRING,
+        allowNull: true
+      },
+      material: DataTypes.STRING,
       desc: DataTypes.TEXT,
       SellerId: DataTypes.INTEGER,
       LocalDeiveryCharge: DataTypes.DOUBLE,

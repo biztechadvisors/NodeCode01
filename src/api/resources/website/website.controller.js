@@ -223,6 +223,9 @@ module.exports = {
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
             badges: 'new',
+            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+            material: value.material ? value.material : "",
+
             Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
           };
           arrData.push(dataList);
@@ -254,7 +257,7 @@ module.exports = {
   ,
 
   async getProductDetail(req, res, next) {
-    const { productId } = req.query; // Get the productId from the request query
+    const { productId } = req.query;
 
     try {
       const product = await db.product.findOne({
@@ -336,6 +339,8 @@ module.exports = {
             })),
           })),
           Thumbnail: product ? product.photo : "",
+          referSizeChart: product.referSizeChart ? product.referSizeChart : "",
+          material: product.material ? product.material : "",
           Photo: imageList ? imageList : [],
         };
 
@@ -418,6 +423,9 @@ module.exports = {
             WarrantyPeriod: value.WarrantyPeriod,
             HighLightDetail: value.HighLightDetail,
             ShippingDays: value.ShippingDays,
+            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+            material: value.material ? value.material : "",
+
           };
         });
 
@@ -649,6 +657,8 @@ module.exports = {
           HighLightDetail: value.HighLightDetail,
           slug: value.slug,
           Thumbnail: value.photo,
+          referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+          material: value.material ? value.material : "",
           actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
           netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
           discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
@@ -795,8 +805,6 @@ module.exports = {
     try {
       const searchWords = query.split(" ");
 
-      // console.log("searchWords", searchWords);
-
       const productResults = await db.product.findAndCountAll({
         where: {
           [Op.or]: [
@@ -836,6 +844,7 @@ module.exports = {
             include: [
               {
                 model: db.VariationOption,
+                as: 'variationOptions', // Use the correct alias here
                 attributes: ["name", "value"],
               },
               {
@@ -855,17 +864,13 @@ module.exports = {
           },
         ],
         order: [['id', 'DESC']],
+        subQuery: false, // Avoid subquery to prevent SequelizeEagerLoadingError
       });
 
       if (productResults.count > 0) {
         const arrData = [];
 
         for (const value of productResults.rows) {
-
-          for (const variant of value.ProductVariants) {
-
-          }
-
           const dataList = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
@@ -876,6 +881,8 @@ module.exports = {
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
             Thumbnail: value.photo,
+            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+            material: value.material ? value.material : "",
             actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
             netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
@@ -884,6 +891,22 @@ module.exports = {
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
+            Attributes: value.ProductVariants.reduce((acc, variant) => {
+              if (variant.variationOptions && variant.variationOptions.length > 0) {
+                variant.variationOptions.forEach(option => {
+                  const existingIndex = acc.findIndex(item => item.name === option.name);
+                  if (existingIndex !== -1) {
+                    // Check if the value is already present
+                    if (!acc[existingIndex].values.includes(option.value)) {
+                      acc[existingIndex].values.push(option.value);
+                    }
+                  } else {
+                    acc.push({ name: option.name, values: [option.value] });
+                  }
+                });
+              }
+              return acc;
+            }, [])
           };
           arrData.push(dataList);
         }
@@ -911,8 +934,7 @@ module.exports = {
       const response = Util.getFormatedResponse(false, { message: err.message });
       return res.status(response.code).json(response);
     }
-  }
-  ,
+  },
 
   async getAutoSuggestList(req, res, next) {
     let { query } = req.query;
@@ -1099,6 +1121,8 @@ module.exports = {
             category_name: value.maincat.name,
             subCategorie_name: value.SubCategory.sub_name,
             Name: value.name,
+            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+            material: value.material ? value.material : "",
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
@@ -1367,6 +1391,8 @@ module.exports = {
             HighLightDetail: value.HighLightDetail,
             slug: value.slug,
             Thumbnail: value.photo,
+            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+            material: value.material ? value.material : "",
             actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
             netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,

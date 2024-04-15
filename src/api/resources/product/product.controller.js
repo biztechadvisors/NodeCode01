@@ -47,13 +47,11 @@ module.exports = {
   async uploadProductsAsync(req, res, next) {
     try {
       const productsData = req.body;
-      console.log("Ram")
 
       if (!Array.isArray(productsData) || productsData.length === 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: 'Invalid or empty products data' });
+        return res.status(400).json({ success: false, message: 'Invalid or empty products data' });
       }
+
       const t = await db.sequelize.transaction();
 
       try {
@@ -73,23 +71,20 @@ module.exports = {
             HighLightDetail,
             ShippingDays,
             PubilshStatus,
+            referSizeChart,
+            material
           } = productData;
 
-          // Fetch category ID based on category name
           const category = await db.category.findOne({ where: { name: categoryName } || { slug: categoryName } });
           if (!category) {
             throw new Error(`Category not found for name: ${categoryName}`);
           }
-
           const categoryId = category.id;
 
-          // Fetch subcategory ID based on subcategory name
           const subcategory = await db.SubCategory.findOne({ where: { sub_name: subCategoryName } });
-
           if (!subcategory) {
             throw new Error(`Subcategory not found for name: ${subCategoryName}`);
           }
-
           const subCategoryId = subcategory.id;
 
           let product = await db.product.findOne({ where: { name: name } });
@@ -97,7 +92,6 @@ module.exports = {
           const brand = brandId ? await db.collection.findOne({ where: { slug: brandId } }) : 1;
 
           if (product) {
-
             // Product already exists, update it
             await db.product.update(
               {
@@ -112,13 +106,14 @@ module.exports = {
                 HighLightDetail: HighLightDetail,
                 ShippingDays,
                 PubilshStatus,
+                referSizeChart,
+                material
               },
               { where: { id: product.id }, transaction: t }
             );
 
             updatedProducts.push({ id: product.id, name: product.name });
           } else {
-
             // Product does not exist, create it
             product = await db.product.create(
               {
@@ -134,18 +129,20 @@ module.exports = {
                 HighLightDetail: HighLightDetail,
                 ShippingDays,
                 PubilshStatus,
+                referSizeChart,
+                material
               },
               { transaction: t }
             );
 
             createdProducts.push({ id: product.id, name: product.name });
-
           }
 
+          // Handling product variants
           if (Array.isArray(productVariants)) {
             const priceEntries = await Promise.all(productVariants.map(async (variant) => {
-
-              return {
+              // Creating product variant entries
+              const productVariant = await db.ProductVariant.create({
                 productId: product.id,
                 productName: variant.productName,
                 slug: variant.slug,
@@ -162,7 +159,6 @@ module.exports = {
                 discount: variant.discount,
                 total: variant.total,
                 netPrice: variant.netPrice,
-                interface: variant.interface,
                 qtyWarning: variant.qtyWarning,
                 youTubeUrl: variant.youTubeUrl,
                 COD: variant.COD,
@@ -172,18 +168,44 @@ module.exports = {
                 shortDesc: variant.shortDesc,
                 stockType: variant.stockType,
                 Available: variant.Available,
-              };
+              }, { transaction: t });
+
+              // Remove existing variation options if there are changes
+              await db.VariationOption.destroy({ where: { productVariantId: productVariant.id }, transaction: t });
+
+              // Map and update/create variationOptions for the current product variant
+              if (Array.isArray(variant.variationOptions)) {
+                for (const option of variant.variationOptions) {
+                  let existingOption = await db.VariationOption.findOne({
+                    where: { name: option.name, productVariantId: productVariant.id }
+                  });
+
+                  if (existingOption) {
+                    // If the option exists, update its value
+                    await existingOption.update({ value: option.value }, { transaction: t });
+                  } else {
+                    // If the option doesn't exist, create a new one
+                    await db.VariationOption.create({
+                      name: option.name,
+                      value: option.value,
+                      productVariantId: productVariant.id
+                    }, { transaction: t });
+                  }
+                }
+              }
+
+              return productVariant;
             }));
 
             if (priceEntries.length) {
               // Delete existing product variants for the updated/inserted product
               await db.ProductVariant.destroy({ where: { productId: product.id }, transaction: t });
-
               // Insert new product variants
               await db.ProductVariant.bulkCreate(priceEntries, { transaction: t });
             }
           }
         }
+
         await t.commit();
         return res.status(201).json({
           success: true,
@@ -191,9 +213,9 @@ module.exports = {
           updatedProducts: updatedProducts,
         });
       } catch (error) {
-        console.log("first", error)
+        console.log("Error:", error);
         await t.rollback();
-        throw error;
+        return res.status(500).json({ success: false, message: 'Internal Server Error' });
       }
     } catch (err) {
       next(err);
@@ -210,6 +232,8 @@ module.exports = {
         name,
         slug,
         brand,
+        referSizeChart,
+        material,
         status,
         productVariants,
         desc,
@@ -231,7 +255,10 @@ module.exports = {
               name: name,
               slug: slug,
               status: "active",
+              PubilshStatus: "Published",
               SellerId: '1',
+              referSizeChart: referSizeChart,
+              material: material,
               brandId: brand ? brand : null,
               desc: desc,
               photo: req.file ? req.file.location : "",
@@ -239,7 +266,7 @@ module.exports = {
             { transaction: t }
           );
 
-          const productVariantsEntries = await Promise.all(variants.map(async (variant) => {
+          await Promise.all(variants.map(async (variant) => {
             let slug = convertToSlug(variant.productName);
             const productVariant = await db.ProductVariant.create(
               {
@@ -390,7 +417,6 @@ module.exports = {
     }
   },
 
-
   async getProductForFlash(req, res, next) {
     try {
       const query = {};
@@ -463,6 +489,8 @@ module.exports = {
         subCatName,
         name,
         slug,
+        referSizeChart,
+        material,
         collection,
         status,
         desc,
@@ -487,6 +515,8 @@ module.exports = {
         subCategoryId: selectedSubCategory || updatedProduct.subCategoryId,
         name: name || updatedProduct.name,
         slug: slug || updatedProduct.slug,
+        referSizeChart: referSizeChart || updatedProduct.referSizeChart,
+        material: material || updatedProduct.material,
         status: parseInt(status) ? "active" : "inactive",
         brandId: collection || updatedProduct.collection,
         desc: desc || updatedProduct.desc,
