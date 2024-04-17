@@ -46,7 +46,9 @@ module.exports = {
 
   async uploadProductsAsync(req, res, next) {
     try {
+
       const productsData = req.body;
+      // console.log(' ***productsData*** ', productsData)
 
       if (!Array.isArray(productsData) || productsData.length === 0) {
         return res.status(400).json({ success: false, message: 'Invalid or empty products data' });
@@ -75,16 +77,21 @@ module.exports = {
             material
           } = productData;
 
+          // Fetch category ID based on category name
           const category = await db.category.findOne({ where: { name: categoryName } || { slug: categoryName } });
           if (!category) {
             throw new Error(`Category not found for name: ${categoryName}`);
           }
+
           const categoryId = category.id;
 
+          // Fetch subcategory ID based on subcategory name
           const subcategory = await db.SubCategory.findOne({ where: { sub_name: subCategoryName } });
+
           if (!subcategory) {
             throw new Error(`Subcategory not found for name: ${subCategoryName}`);
           }
+
           const subCategoryId = subcategory.id;
 
           let product = await db.product.findOne({ where: { name: name } });
@@ -123,7 +130,7 @@ module.exports = {
                 slug: slug,
                 status: 'active',
                 SellerId: '1',
-                brandId: brand.id,
+                brandId: brand.id ? brand.id : 1,
                 desc: desc,
                 photo: req.file ? req.file.location : null,
                 HighLightDetail: HighLightDetail,
@@ -138,72 +145,89 @@ module.exports = {
             createdProducts.push({ id: product.id, name: product.name });
           }
 
-          // Handling product variants
           if (Array.isArray(productVariants)) {
-            const priceEntries = await Promise.all(productVariants.map(async (variant) => {
-              // Creating product variant entries
-              const productVariant = await db.ProductVariant.create({
-                productId: product.id,
-                productName: variant.productName,
-                slug: variant.slug,
-                productCode: variant.productCode || 'PD' + Math.random().toString(36).substr(2, 4),
-                actualPrice: variant.actualPrice,
-                distributorPrice: variant.distributorPrice,
-                marginPer: variant.marginPer,
-                marginPrice: variant.marginPrice,
-                buyerPrice: variant.buyerPrice,
-                sellerPrice: variant.sellerPrice,
-                unitSize: variant.unitSize,
-                qty: variant.qty,
-                discountPer: variant.discountPer,
-                discount: variant.discount,
-                total: variant.total,
-                netPrice: variant.netPrice,
-                qtyWarning: variant.qtyWarning,
-                youTubeUrl: variant.youTubeUrl,
-                COD: variant.COD,
-                brandId: brand.id,
-                refundable: variant.refundable,
-                longDesc: variant.longDesc,
-                shortDesc: variant.shortDesc,
-                stockType: variant.stockType,
-                Available: variant.Available,
-              }, { transaction: t });
+            await Promise.all(productVariants.map(async (variant) => {
+              const [productVariant, created] = await db.ProductVariant.findOrCreate({
+                where: { slug: variant.slug },
+                defaults: {
+                  productId: product.id,
+                  productName: variant.productName,
+                  slug: variant.slug,
+                  productCode: variant.productCode || 'PD' + Math.random().toString(36).substr(2, 4),
+                  actualPrice: variant.actualPrice,
+                  distributorPrice: variant.distributorPrice || 0,
+                  marginPer: variant.marginPer,
+                  marginPrice: variant.marginPrice,
+                  buyerPrice: variant.buyerPrice || 0,
+                  sellerPrice: variant.sellerPrice,
+                  unitSize: variant.unitSize,
+                  qty: variant.qty,
+                  discountPer: variant.discountPer,
+                  discount: variant.discount,
+                  total: variant.total,
+                  netPrice: variant.netPrice,
+                  qtyWarning: variant.qtyWarning,
+                  youTubeUrl: variant.youTubeUrl,
+                  COD: variant.COD,
+                  brandId: brand.id,
+                  refundable: variant.refundable,
+                  longDesc: variant.longDesc,
+                  shortDesc: variant.shortDesc,
+                  stockType: variant.stockType,
+                  Available: variant.Available,
+                },
+                transaction: t
+              });
 
-              // Remove existing variation options if there are changes
-              await db.VariationOption.destroy({ where: { productVariantId: productVariant.id }, transaction: t });
-
-              // Map and update/create variationOptions for the current product variant
-              if (Array.isArray(variant.variationOptions)) {
-                for (const option of variant.variationOptions) {
-                  let existingOption = await db.VariationOption.findOne({
-                    where: { name: option.name, productVariantId: productVariant.id }
-                  });
-
-                  if (existingOption) {
-                    // If the option exists, update its value
-                    await existingOption.update({ value: option.value }, { transaction: t });
-                  } else {
-                    // If the option doesn't exist, create a new one
-                    await db.VariationOption.create({
-                      name: option.name,
-                      value: option.value,
-                      productVariantId: productVariant.id
-                    }, { transaction: t });
-                  }
-                }
+              if (!created) {
+                await productVariant.update({
+                  productId: product.id,
+                  productName: variant.productName,
+                  productCode: variant.productCode || 'PD' + Math.random().toString(36).substr(2, 4),
+                  actualPrice: variant.actualPrice,
+                  distributorPrice: variant.distributorPrice || 0,
+                  marginPer: variant.marginPer,
+                  marginPrice: variant.marginPrice,
+                  buyerPrice: variant.buyerPrice || 0,
+                  sellerPrice: variant.sellerPrice,
+                  unitSize: variant.unitSize,
+                  qty: variant.qty,
+                  discountPer: variant.discountPer,
+                  discount: variant.discount,
+                  total: variant.total,
+                  netPrice: variant.netPrice,
+                  qtyWarning: variant.qtyWarning,
+                  youTubeUrl: variant.youTubeUrl,
+                  COD: variant.COD,
+                  brandId: brand.id,
+                  refundable: variant.refundable,
+                  longDesc: variant.longDesc,
+                  shortDesc: variant.shortDesc,
+                  stockType: variant.stockType,
+                  Available: variant.Available,
+                }, { transaction: t });
               }
 
-              return productVariant;
+              await db.VariationOption.destroy({ where: { productVariantId: productVariant.id }, transaction: t });
+
+              if (Array.isArray(variant.variationOptions)) {
+                for (const option of variant.variationOptions) {
+                  await db.VariationOption.create({
+                    name: option.name,
+                    value: option.value,
+                    productVariantId: productVariant.id
+                  }, { transaction: t });
+                }
+              }
             }));
 
-            if (priceEntries.length) {
-              // Delete existing product variants for the updated/inserted product
-              await db.ProductVariant.destroy({ where: { productId: product.id }, transaction: t });
-              // Insert new product variants
-              await db.ProductVariant.bulkCreate(priceEntries, { transaction: t });
-            }
+            const existingSlugs = productVariants.map(variant => variant.slug);
+            await db.ProductVariant.destroy({
+              where: { productId: product.id, slug: { [Op.notIn]: existingSlugs } },
+              transaction: t
+            });
           }
+
         }
 
         await t.commit();
