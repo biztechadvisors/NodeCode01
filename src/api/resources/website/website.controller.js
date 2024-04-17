@@ -807,24 +807,22 @@ module.exports = {
 
       const productResults = await db.product.findAndCountAll({
         where: {
-          [Op.or]: [
-            { PubilshStatus: { [Op.eq]: 'Published' } },
-            ...searchWords.map((word) => ({
-              [Op.or]: [
-                { name: { [Op.startsWith]: word } },
-                { slug: { [Op.startsWith]: word } },
-                { '$ProductVariants.slug$': { [Op.startsWith]: word } },
-                { '$ProductVariants.productName$': { [Op.startsWith]: word } },
-                { '$ProductVariants.netPrice$': { [Op.startsWith]: word } },
-                { '$ProductVariants.actualPrice$': { [Op.startsWith]: word } },
-                { '$ProductVariants.shortDesc$': { [Op.startsWith]: word } },
-                { '$ProductVariants.longDesc$': { [Op.startsWith]: word } },
-                { '$maincat.slug$': { [Op.startsWith]: word } },
-                { '$maincat.name$': { [Op.startsWith]: word } },
-                { '$SubCategory.slug$': { [Op.startsWith]: word } },
-                { '$SubCategory.sub_name$': { [Op.startsWith]: word } },
-              ],
-            })),
+          [Op.and]: [
+            { PubilshStatus: 'Published' }, // Filter by 'Published' status
+            {
+              [Op.or]: searchWords.map((word) => ({
+                [Op.or]: [
+                  { name: { [Op.substring]: word } },
+                  { slug: { [Op.substring]: word } },
+                  { '$ProductVariants.productName$': { [Op.substring]: word } },
+                  { '$ProductVariants.slug$': { [Op.substring]: word } },
+                  { '$ProductVariants.shortDesc$': { [Op.substring]: word } },
+                  { '$ProductVariants.longDesc$': { [Op.substring]: word } },
+                  { '$ProductVariants.netPrice$': { [Op.substring]: word } },
+                  { '$ProductVariants.actualPrice$': { [Op.substring]: word } },
+                ],
+              })),
+            },
           ],
         },
         include: [
@@ -844,7 +842,7 @@ module.exports = {
             include: [
               {
                 model: db.VariationOption,
-                as: 'variationOptions', // Use the correct alias here
+                as: 'variationOptions',
                 attributes: ["name", "value"],
               },
               {
@@ -864,8 +862,11 @@ module.exports = {
           },
         ],
         order: [['id', 'DESC']],
-        subQuery: false, // Avoid subquery to prevent SequelizeEagerLoadingError
+        subQuery: false,
       });
+
+
+
 
       if (productResults.count > 0) {
         const arrData = [];

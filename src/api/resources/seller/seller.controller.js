@@ -1051,6 +1051,8 @@ module.exports = {
       "PubilshStatus",
       "ShippingDays",
       "HighLightDetail",
+      "referSizeChart",
+      "material"
     ];
     try {
       await db.product.findAndCountAll({

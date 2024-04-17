@@ -48,7 +48,7 @@ module.exports = {
     try {
 
       const productsData = req.body;
-      // console.log(' ***productsData*** ', productsData)
+      console.log(' ***productsData*** ', productsData)
 
       if (!Array.isArray(productsData) || productsData.length === 0) {
         return res.status(400).json({ success: false, message: 'Invalid or empty products data' });
@@ -67,6 +67,7 @@ module.exports = {
             name,
             slug,
             brandId,
+            photo,
             status,
             productVariants,
             desc,
@@ -74,7 +75,9 @@ module.exports = {
             ShippingDays,
             PubilshStatus,
             referSizeChart,
-            material
+            material,
+            condition,
+
           } = productData;
 
           // Fetch category ID based on category name
@@ -109,12 +112,13 @@ module.exports = {
                 status: 'active',
                 brandId: brand ? brand.id : 1,
                 desc: desc,
-                photo: req.file ? req.file.location : product.photo,
+                photo: photo ? photo : product.photo,
                 HighLightDetail: HighLightDetail,
                 ShippingDays,
-                PubilshStatus,
+                PubilshStatus: product.PubilshStatus,
                 referSizeChart,
-                material
+                material,
+                condition,
               },
               { where: { id: product.id }, transaction: t }
             );
@@ -132,12 +136,13 @@ module.exports = {
                 SellerId: '1',
                 brandId: brand.id ? brand.id : 1,
                 desc: desc,
-                photo: req.file ? req.file.location : null,
+                photo: photo ? photo : null,
                 HighLightDetail: HighLightDetail,
                 ShippingDays,
-                PubilshStatus,
-                referSizeChart,
-                material
+                PubilshStatus: 'Published',
+                referSizeChart: referSizeChart,
+                material: material,
+                condition,
               },
               { transaction: t }
             );
@@ -168,8 +173,8 @@ module.exports = {
                   netPrice: variant.netPrice,
                   qtyWarning: variant.qtyWarning,
                   youTubeUrl: variant.youTubeUrl,
-                  COD: variant.COD,
-                  brandId: brand.id,
+                  COD: variant.COD ? variant.COD : 0,
+                  brandId: brand.id ? brand.id : 1,
                   refundable: variant.refundable,
                   longDesc: variant.longDesc,
                   shortDesc: variant.shortDesc,
@@ -183,6 +188,7 @@ module.exports = {
                 await productVariant.update({
                   productId: product.id,
                   productName: variant.productName,
+                  slug: variant.slug,
                   productCode: variant.productCode || 'PD' + Math.random().toString(36).substr(2, 4),
                   actualPrice: variant.actualPrice,
                   distributorPrice: variant.distributorPrice || 0,
@@ -198,8 +204,8 @@ module.exports = {
                   netPrice: variant.netPrice,
                   qtyWarning: variant.qtyWarning,
                   youTubeUrl: variant.youTubeUrl,
-                  COD: variant.COD,
-                  brandId: brand.id,
+                  COD: variant.COD ? variant.COD : 0,
+                  brandId: brand.id ? brand.id : 1,
                   refundable: variant.refundable,
                   longDesc: variant.longDesc,
                   shortDesc: variant.shortDesc,
@@ -212,11 +218,15 @@ module.exports = {
 
               if (Array.isArray(variant.variationOptions)) {
                 for (const option of variant.variationOptions) {
-                  await db.VariationOption.create({
-                    name: option.name,
-                    value: option.value,
-                    productVariantId: productVariant.id
-                  }, { transaction: t });
+                  if (option.value !== null && option.value !== undefined) {
+                    await db.VariationOption.create({
+                      name: option.name,
+                      value: option.value,
+                      productVariantId: productVariant.id
+                    }, { transaction: t });
+                  } else {
+                    console.error("Error: VariationOption.value cannot be null or undefined");
+                  }
                 }
               }
             }));
