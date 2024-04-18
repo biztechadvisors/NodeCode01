@@ -588,6 +588,9 @@ module.exports = {
             netPrice: variant.netPrice || 0,
             longDesc: variant.longDesc || "",
             shortDesc: variant.shortDesc || "",
+            COD: variant.COD,
+            stockType: variant.stockType
+
           });
         } else {
           // If the variant exists, update its fields
@@ -606,6 +609,8 @@ module.exports = {
             netPrice: variant.netPrice || 0,
             longDesc: variant.longDesc || "",
             shortDesc: variant.shortDesc || "",
+            COD: variant.COD || 0,
+            stockType: variant.stockType || 0
           });
         }
 
