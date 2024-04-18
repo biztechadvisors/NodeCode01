@@ -368,6 +368,9 @@ module.exports = {
   },
   async updateProduct(req, res, next) {
     try {
+
+      console.log('req.body***372-updateproduct', req.body)
+
       const {
         productId,
         categoryId,
@@ -384,6 +387,8 @@ module.exports = {
         priceDetails,
         HighLightDetais,
         tags,
+        material,
+        referSizeChart
       } = req.body;
       db.user
         .findOne({
@@ -410,6 +415,8 @@ module.exports = {
                   HighLightDetail: HighLightDetais,
                   name: priceDetails[0].productName,
                   slug: convertToSlug(priceDetails[0].productName),
+                  material: material,
+                  referSizeChart: referSizeChart
                 },
                 { where: { id: productId } },
                 { transaction: t }
@@ -1055,7 +1062,8 @@ module.exports = {
       "material"
     ];
     try {
-      await db.product.findAndCountAll({
+      const totalProducts = await db.product.count({ where: query.where }); // Get total count of products that match the query
+      const products = await db.product.findAll({
         ...query,
         include: [
           { model: db.category, as: "maincat", attributes: ["id", "name"] },
@@ -1076,36 +1084,32 @@ module.exports = {
             model: db.collection,
           },
         ],
-      })
-        .then((list) => {
-          if (list.count === 0) {
-            let response = Util.getFormatedResponse(false, {
-              message: "No data found",
-            });
-            res.status(response.code).json(response);
-          } else {
-            console.log("Count", list.rows.length)
-            let pages = Math.ceil(list.count / limit);
-            const finalResult = {
-              count: list.count,
-              pages: pages,
-              page: req.query.page,
-              items: list.rows,
-            };
-            let response = Util.getFormatedResponse(false, finalResult, {
-              message: "Success",
-            });
-            res.status(response.code).json(response);
-          }
-        })
-        .catch(function (err) {
-          console.log(err);
-          next(err);
+      });
+
+      if (products.length === 0) {
+        let response = Util.getFormatedResponse(false, {
+          message: "No data found",
         });
+        res.status(response.code).json(response);
+      } else {
+        console.log("Count", products.length)
+        let pages = Math.ceil(totalProducts / limit); // Calculate total pages based on total products
+        const finalResult = {
+          count: products.length, // Count of products for the current page
+          pages: pages,
+          page: req.query.page,
+          items: products,
+        };
+        let response = Util.getFormatedResponse(false, finalResult, {
+          message: "Success",
+        });
+        res.status(response.code).json(response);
+      }
     } catch (err) {
       console.log(err);
       next(err);
     }
+
   },
 
   async CommonName(req, res, next) {
