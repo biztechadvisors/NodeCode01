@@ -360,7 +360,9 @@ module.exports = {
   },
 
   async getCategoryByProduct(req, res, next) {
-    const { slug } = req.body;
+    const { slug, limit = 10, page = 1 } = req.body;
+    const offset = (page - 1) * limit;
+
     try {
       const result = {};
 
@@ -373,126 +375,176 @@ module.exports = {
       });
 
       if (result.maincat) {
+        const totalCount = await db.product.count({
+          where: {
+            categoryId: result.maincat.id,
+            [Op.and]: [
+              { PubilshStatus: { [Op.eq]: "Published" } }
+            ]
+          },
+        });
+
         const products = await db.product.findAll({
           where: {
             categoryId: result.maincat.id,
-            PubilshStatus: { [Op.eq]: "Published" },
+            [Op.and]: [
+              { PubilshStatus: { [Op.eq]: "Published" } }
+            ]
           },
           include: [
             {
               model: db.ProductVariant,
               include: [
+                {
+                  model: db.VariationOption,
+                  attributes: ["name", "value"],
+                  as: "variationOptions",
+                },
                 { model: db.productphoto, attributes: ["id", "imgUrl"] },
               ],
             },
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
             { model: db.SubCategory, attributes: ["id", "sub_name"] },
           ],
+          limit: limit,
+          offset: offset,
+          order: [['id', 'DESC']],
         });
 
-        const arrData = products.map((value) => {
-          return {
-            productName: value.ProductVariants[0].productName,
-            slug: value.ProductVariants[0].slug,
-            Available: value.ProductVariants[0].Available,
-            qty: value.ProductVariants[0].qty,
-            unitSize: value.ProductVariants[0].unitSize,
-            thumbnail: value.ProductVariants[0].thumbnail,
-            gallery: value.ProductVariants[0].productphotos,
-            youTubeUrl: value.ProductVariants[0].youTubeUrl,
-            qtyWarning: value.ProductVariants[0].qtyWarning,
-            shortDesc: value.ProductVariants[0].shortDesc,
-            longDesc: value.ProductVariants[0].longDesc,
-            distributorPrice: value.ProductVariants[0].distributorPrice,
-            netPrice: value.ProductVariants[0].netPrice,
-            discount: Math.round(
-              value.ProductVariants[0].distributorPrice -
-              value.ProductVariants[0].netPrice
-            ),
-            discountPer: Math.round(
-              (value.ProductVariants[0].distributorPrice -
-                value.ProductVariants[0].netPrice) /
-              100
-            ),
-            maincat: value.maincat.name,
-            subcat: value.SubCategory.sub_name,
-            LocalDeiveryCharge: value.LocalDeiveryCharge,
-            ZonalDeiveryCharge: value.ZonalDeiveryCharge,
-            NationalDeiveryCharge: value.NationalDeiveryCharge,
-            WarrantyType: value.WarrantyType,
-            WarrantyPeriod: value.WarrantyPeriod,
-            HighLightDetail: value.HighLightDetail,
-            ShippingDays: value.ShippingDays,
-            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
-            material: value.material ? value.material : "",
+        const totalPages = Math.ceil(totalCount / limit);
+        const arrData = products.map((value) => ({
+          id: value.id,
+          productName: value.ProductVariants[0].productName,
+          slug: value.ProductVariants[0].slug,
+          Available: value.ProductVariants[0].Available,
+          qty: value.ProductVariants[0].qty,
+          unitSize: value.ProductVariants[0].unitSize,
+          thumbnail: value.ProductVariants[0].thumbnail,
+          gallery: value.ProductVariants[0].productphotos,
+          youTubeUrl: value.ProductVariants[0].youTubeUrl,
+          qtyWarning: value.ProductVariants[0].qtyWarning,
+          shortDesc: value.ProductVariants[0].shortDesc,
+          longDesc: value.ProductVariants[0].longDesc,
+          distributorPrice: value.ProductVariants[0].distributorPrice,
+          netPrice: value.ProductVariants[0].netPrice,
+          discount: Math.round(
+            value.ProductVariants[0].distributorPrice -
+            value.ProductVariants[0].netPrice
+          ),
+          discountPer: Math.round(
+            (value.ProductVariants[0].distributorPrice -
+              value.ProductVariants[0].netPrice) /
+            100
+          ),
+          maincat: value.maincat.name,
+          subcat: value.SubCategory.sub_name,
+          LocalDeiveryCharge: value.LocalDeiveryCharge,
+          ZonalDeiveryCharge: value.ZonalDeiveryCharge,
+          NationalDeiveryCharge: value.NationalDeiveryCharge,
+          WarrantyType: value.WarrantyType,
+          WarrantyPeriod: value.WarrantyPeriod,
+          HighLightDetail: value.HighLightDetail,
+          ShippingDays: value.ShippingDays,
+          referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+          material: value.material ? value.material : "",
+          variationOptions: value.ProductVariants[0].variationOptions.map((option) => ({
+            name: option.name,
+            value: option.value,
+          })),
+        }));
 
-          };
-        });
-
-        return res
-          .status(200)
-          .json({ status: 200, success: true, data: arrData });
+        return res.status(200).json({ status: 200, success: true, data: arrData, totalItems: totalCount, totalPages: totalPages });
       }
 
       if (result.subcat) {
+        const totalCount = await db.product.count({
+          where: {
+            subCategoryId: result.subcat.id,
+            [Op.and]: [
+              { PubilshStatus: { [Op.eq]: "Published" } }
+            ]
+          }
+        });
+
+
         const products = await db.product.findAll({
-          where: { subCategoryId: result.subcat.id },
+          where: {
+            subCategoryId: result.subcat.id,
+            [Op.and]: [
+              { PubilshStatus: { [Op.eq]: "Published" } }
+            ]
+          },
           include: [
             {
               model: db.ProductVariant,
               include: [
+                {
+                  model: db.VariationOption,
+                  attributes: ["name", "value"],
+                  as: "variationOptions",
+                },
                 { model: db.productphoto, attributes: ["id", "imgUrl"] },
               ],
             },
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
             { model: db.SubCategory, attributes: ["id", "sub_name"] },
           ],
+          limit: limit,
+          offset: offset,
+          order: [['id', 'DESC']],
         });
 
-        const arrData = products.map((value) => {
-          return {
-            productName: value.ProductVariants[0].productName,
-            slug: value.ProductVariants[0].slug,
-            Available: value.ProductVariants[0].Available,
-            qty: value.ProductVariants[0].qty,
-            unitSize: value.ProductVariants[0].unitSize,
-            thumbnail: value.ProductVariants[0].thumbnail,
-            gallery: value.ProductVariants[0].productphotos,
-            youTubeUrl: value.ProductVariants[0].youTubeUrl,
-            qtyWarning: value.ProductVariants[0].qtyWarning,
-            shortDesc: value.ProductVariants[0].shortDesc,
-            longDesc: value.ProductVariants[0].longDesc,
-            distributorPrice: value.ProductVariants[0].distributorPrice,
-            netPrice: value.ProductVariants[0].netPrice,
-            discount: Math.round(
-              value.ProductVariants[0].distributorPrice -
-              value.ProductVariants[0].netPrice
-            ),
-            discountPer: Math.round(
-              (value.ProductVariants[0].distributorPrice -
-                value.ProductVariants[0].netPrice) /
-              100
-            ),
-            maincat: value.maincat.name,
-            subcat: value.SubCategory.sub_name,
-            LocalDeiveryCharge: value.LocalDeiveryCharge,
-            ZonalDeiveryCharge: value.ZonalDeiveryCharge,
-            NationalDeiveryCharge: value.NationalDeiveryCharge,
-            WarrantyType: value.WarrantyType,
-            WarrantyPeriod: value.WarrantyPeriod,
-            HighLightDetail: value.HighLightDetail,
-            ShippingDays: value.ShippingDays,
-          };
-        });
+        const totalPages = Math.ceil(totalCount / limit);
+        const arrData = products.map((value) => ({
+          id: value.id,
+          productName: value.ProductVariants[0].productName,
+          slug: value.ProductVariants[0].slug,
+          Available: value.ProductVariants[0].Available,
+          PublishStatus: value.PubilshStatus,
+          qty: value.ProductVariants[0].qty,
+          unitSize: value.ProductVariants[0].unitSize,
+          thumbnail: value.ProductVariants[0].thumbnail,
+          gallery: value.ProductVariants[0].productphotos,
+          youTubeUrl: value.ProductVariants[0].youTubeUrl,
+          qtyWarning: value.ProductVariants[0].qtyWarning,
+          shortDesc: value.ProductVariants[0].shortDesc,
+          longDesc: value.ProductVariants[0].longDesc,
+          distributorPrice: value.ProductVariants[0].distributorPrice,
+          netPrice: value.ProductVariants[0].netPrice,
+          discount: Math.round(
+            value.ProductVariants[0].distributorPrice -
+            value.ProductVariants[0].netPrice
+          ),
+          discountPer: Math.round(
+            (value.ProductVariants[0].distributorPrice -
+              value.ProductVariants[0].netPrice) /
+            100
+          ),
+          maincat: value.maincat.name,
+          subcat: value.SubCategory.sub_name,
+          LocalDeiveryCharge: value.LocalDeiveryCharge,
+          ZonalDeiveryCharge: value.ZonalDeiveryCharge,
+          NationalDeiveryCharge: value.NationalDeiveryCharge,
+          WarrantyType: value.WarrantyType,
+          WarrantyPeriod: value.WarrantyPeriod,
+          HighLightDetail: value.HighLightDetail,
+          ShippingDays: value.ShippingDays,
+          referSizeChart: value.referSizeChart ? value.referSizeChart : "",
+          material: value.material ? value.material : "",
+          variationOptions: value.ProductVariants[0].variationOptions.map((option) => ({
+            name: option.name,
+            value: option.value,
+          })),
+        }));
 
-        return res
-          .status(200)
-          .json({ status: 200, success: true, data: arrData });
+        return res.status(200).json({ status: 200, success: true, data: arrData, totalItems: totalCount, totalPages: totalPages });
       }
     } catch (err) {
       next(err);
     }
-  },
+  }
+  ,
+
 
   async getFilterAllProduct(req, res, next) {
     const limit = req.query.limit ? parseInt(req.query.limit) : 10;
@@ -812,10 +864,10 @@ module.exports = {
             {
               [Op.or]: searchWords.map((word) => ({
                 [Op.or]: [
-                  { name: { [Op.substring]: word } },
-                  { slug: { [Op.substring]: word } },
-                  { '$ProductVariants.productName$': { [Op.substring]: word } },
-                  { '$ProductVariants.slug$': { [Op.substring]: word } },
+                  { name: { [Op.startsWith]: word } },
+                  { slug: { [Op.startsWith]: word } },
+                  { '$ProductVariants.productName$': { [Op.startsWith]: word } },
+                  { '$ProductVariants.slug$': { [Op.startsWith]: word } },
                   { '$ProductVariants.shortDesc$': { [Op.substring]: word } },
                   { '$ProductVariants.longDesc$': { [Op.substring]: word } },
                   { '$ProductVariants.netPrice$': { [Op.substring]: word } },
@@ -864,9 +916,6 @@ module.exports = {
         order: [['id', 'DESC']],
         subQuery: false,
       });
-
-
-
 
       if (productResults.count > 0) {
         const arrData = [];
