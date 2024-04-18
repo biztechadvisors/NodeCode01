@@ -496,7 +496,7 @@ module.exports = {
             const query = {
                 where: {},
                 attributes: ["id", "paymentmethod", "number", "grandtotal", "createdAt", "shipment_id", "order_Id"],
-                order: [["createdAt", "DESC"]],
+                order: [["createdAt", "DESC"]], // Sort by createdAt in descending order
                 include: [
                     {
                         model: db.Cart_Detail,
@@ -597,7 +597,6 @@ module.exports = {
             res.status(500).json({ errors: "" + err });
         }
     },
-
 
     async statusUpdate(req, res, next) {
         try {

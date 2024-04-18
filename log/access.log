@@ -8606,3 +8606,5 @@
 [0mPOST /api/website/category/getAllProduct?limit=10&page=1 [32m200[0m 1086.510 ms - 15781[0m
 [0mPOST /api/website/category/getAllProduct?limit=10&page=1 [32m200[0m 1074.821 ms - 15781[0m
 [0mPOST /api/website/category/getAllProduct?limit=10&page=1 [32m200[0m 880.251 ms - 8013[0m
+[0mPOST /api/website/category/getAllProduct?limit=10&page=1 [32m200[0m 991.728 ms - 8125[0m
+[0mGET /api/website/catalog/product/search?page=1&limit=20&filter_attribute=[%22Age:3%20to%204%20Yrs%22,%22Colors:Pink%22] [32m200[0m 1559.046 ms - 8727[0m
