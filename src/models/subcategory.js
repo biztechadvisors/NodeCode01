@@ -6,11 +6,11 @@ module.exports = (sequelize, DataTypes) => {
     thumbnail: DataTypes.STRING,
     slug: DataTypes.STRING,
     title: DataTypes.STRING,
-    keyword: DataTypes.STRING, 
+    keyword: DataTypes.STRING,
     desc: DataTypes.TEXT
-    
+
   }, {});
-  SubCategory.associate = function(models) {
+  SubCategory.associate = function (models) {
     // associations can be defined here
     models.SubCategory.belongsTo(models.category, { foreignKey: 'categoryId' });
     models.SubCategory.hasMany(models.SubChildCategory, { foreignKey: 'subcategoryId' });

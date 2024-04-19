@@ -1333,7 +1333,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
-                    as: 'subcat',
+                    as: 'subcategories',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1371,7 +1371,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
-                    as: 'subcat',
+                    as: 'subcategories',
                     where: {
                       // status: { [Op.eq]: 'active' },
                       id: result.subcat.id,
@@ -1414,7 +1414,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
-                    as: 'subcat',
+                    as: 'subcategories',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1455,7 +1455,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
-                    as: 'subcat',
+                    as: 'subcategories',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1498,7 +1498,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
-                    as: 'subcat',
+                    as: 'subcategories',
                     attributes: ["id", "sub_name"],
                     include: [
                       {

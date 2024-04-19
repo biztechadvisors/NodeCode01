@@ -305,7 +305,7 @@ module.exports = {
     ];
     query.include = [
       { model: db.category, as: "maincat", attributes: ["id", "name"] },
-      { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
+      { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
       { model: db.SubChildCategory, attributes: ["id", "name"] },
       {
         model: db.ProductVariant,
@@ -944,7 +944,7 @@ module.exports = {
           ],
           include: [
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
-            { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
+            { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
           ],
         },
         { model: db.productphoto, attributes: ["id", "imgUrl"] },
@@ -978,8 +978,8 @@ module.exports = {
             sellerPrice: value ? value.sellerPrice : null,
             maincat: value.product && value.product.maincat ? value.product.maincat.name : null,
             // BrandName: value.brand ? value.brand : null,
-            subcat: value.product.SubCategory
-              ? value.product.SubCategory.sub_name
+            subcat: value.product.subcategories
+              ? value.product.subcategories.sub_name
               : "",
             childcat: value.product.SubChildCategory
               ? value.product.SubChildCategory.name
@@ -1067,7 +1067,7 @@ module.exports = {
         ...query,
         include: [
           { model: db.category, as: "maincat", attributes: ["id", "name"] },
-          { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
           {
             model: db.ProductVariant,
             ...whereCond,

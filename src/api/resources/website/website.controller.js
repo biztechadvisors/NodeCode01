@@ -110,7 +110,7 @@ module.exports = {
           include: [
             {
               model: db.SubCategory,
-              as: 'subcat',
+              as: 'subcategories',
               order: [["id", "asc"]],
               attributes: ["id", "sub_name", "slug", "thumbnail"],
             }
@@ -184,7 +184,7 @@ module.exports = {
             ],
           },
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-          { model: db.SubCategory, as: 'subcat', attributes: ['id', 'sub_name'] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ['id', 'sub_name'] },
         ],
         order: [['id', 'DESC']],
       });
@@ -209,7 +209,7 @@ module.exports = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
             category_name: value.maincat.name,
-            subCategorie_name: value.subcat?.sub_name,
+            subCategorie_name: value.subcategories?.sub_name,
             Name: value.name,
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
@@ -281,7 +281,7 @@ module.exports = {
                 model: db.product,
                 include: [
                   { model: db.category, attributes: ["name"], as: "maincat" },
-                  { model: db.SubCategory, as: 'subcat', attributes: ["sub_name"] },
+                  { model: db.SubCategory, as: 'subcategories', attributes: ["sub_name"] },
                   { model: db.ch_specification },
                   {
                     model: db.user,
@@ -314,7 +314,7 @@ module.exports = {
             variantId: variant.id,
             productId: variant.productId,
             MainCat: variant.product.maincat.name,
-            SubCat: variant.product.subcat.sub_name,
+            SubCat: variant.product.subcategories.sub_name,
             Name: variant.productName,
             productCode: variant.productCode,
             Quantity: variant.qtyWarning,
@@ -401,7 +401,7 @@ module.exports = {
               ],
             },
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
-            { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
+            { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
           ],
           limit: limit,
           offset: offset,
@@ -434,7 +434,7 @@ module.exports = {
             100
           ),
           maincat: value.maincat.name,
-          subcat: value.subcat.sub_name,
+          subcat: value.subcategories.sub_name,
           LocalDeiveryCharge: value.LocalDeiveryCharge,
           ZonalDeiveryCharge: value.ZonalDeiveryCharge,
           NationalDeiveryCharge: value.NationalDeiveryCharge,
@@ -484,7 +484,7 @@ module.exports = {
               ],
             },
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
-            { model: db.SubCategory, as: "subcat", attributes: ["id", "sub_name"] },
+            { model: db.SubCategory, as: "subcategories", attributes: ["id", "sub_name"] },
           ],
           limit: limit,
           offset: offset,
@@ -518,7 +518,7 @@ module.exports = {
             100
           ),
           maincat: value.maincat.name,
-          subcat: value.subcat.sub_name,
+          subcat: value.subcategories.sub_name,
           LocalDeiveryCharge: value.LocalDeiveryCharge,
           ZonalDeiveryCharge: value.ZonalDeiveryCharge,
           NationalDeiveryCharge: value.NationalDeiveryCharge,
@@ -690,7 +690,7 @@ module.exports = {
             ],
           },
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-          { model: db.SubCategory, as: 'subcat', attributes: ['id', 'sub_name'] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ['id', 'sub_name'] },
         ],
         order: [['id', 'DESC']],
       });
@@ -700,7 +700,7 @@ module.exports = {
           id: value.id,
           variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
           category_name: value.maincat.name,
-          subCategorie_name: value.subcat?.sub_name,
+          subCategorie_name: value.subcategories?.sub_name,
           Name: value.name,
           PublishStatus: value.PubilshStatus,
           HighLightDetail: value.HighLightDetail,
@@ -786,7 +786,7 @@ module.exports = {
             { name: { [Op.like]: search } },
           ],
         },
-        include: [{ model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name", "slug"] }],
+        include: [{ model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name", "slug"] }],
       });
 
       // Fetch subcategories and associated subchild categories
@@ -867,7 +867,7 @@ module.exports = {
                 { '$ProductVariants.netPrice$': { [Op.regexp]: query } },
                 { '$ProductVariants.actualPrice$': { [Op.regexp]: query } },
                 { '$maincat.name$': { [Op.regexp]: query } },
-                { '$subcat.sub_name$': { [Op.regexp]: query } },
+                { '$subcategories.sub_name$': { [Op.regexp]: query } },
               ],
 
             },
@@ -906,7 +906,7 @@ module.exports = {
           },
           {
             model: db.SubCategory,
-            as: 'subcat',
+            as: 'subcategories',
             attributes: ['id', 'sub_name'],
           },
         ],
@@ -922,7 +922,7 @@ module.exports = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
             category_name: value.maincat?.name,
-            subCategorie_name: value.subcat?.sub_name,
+            subCategorie_name: value.subcategories?.sub_name,
             Name: value.name,
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
@@ -1140,7 +1140,7 @@ module.exports = {
           ],
         },
         { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-        { model: db.SubCategory, as: 'subcat', attributes: ['id', 'sub_name'] },
+        { model: db.SubCategory, as: 'subcategories', attributes: ['id', 'sub_name'] },
       ],
     };
 
@@ -1180,7 +1180,7 @@ module.exports = {
           id: value.id,
           variantId: value.ProductVariants[0]?.id || null,
           category_name: value.maincat?.name,
-          subCategorie_name: value.subcat?.sub_name,
+          subCategorie_name: value.subcategories?.sub_name,
           Name: value.name,
           PublishStatus: value.PubilshStatus,
           HighLightDetail: value.HighLightDetail,
@@ -1412,7 +1412,7 @@ module.exports = {
             ],
           },
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-          { model: db.SubCategory, as: 'subcat', attributes: ['id', 'sub_name'] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ['id', 'sub_name'] },
         ],
         order: [['id', 'DESC']],
       });
@@ -1439,7 +1439,7 @@ module.exports = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
             category_name: value.maincat.name,
-            subCategorie_name: value.subcat?.sub_name,
+            subCategorie_name: value.subcategories?.sub_name,
             Name: value.name,
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
@@ -1783,6 +1783,7 @@ module.exports = {
             },
             {
               model: db.SubCategory,
+              as: 'subcategories',
               attributes: ['id', 'sub_name'],
             },
           ],
@@ -1801,7 +1802,7 @@ module.exports = {
               id: value.id,
               variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
               category_name: value.maincat.name,
-              subCategorie_name: value.subcat.sub_name,
+              subCategorie_name: value.subcategories.sub_name,
               Name: value.name,
               PublishStatus: value.PubilshStatus,
               HighLightDetail: value.HighLightDetail,
@@ -1886,7 +1887,7 @@ module.exports = {
             ],
           },
           { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-          { model: db.SubCategory, as: 'subcat', attributes: ['id', 'sub_name'] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ['id', 'sub_name'] },
         ],
 
         order: [['id', 'DESC']],
@@ -1904,7 +1905,7 @@ module.exports = {
           id: value.id,
           variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
           category_name: value.maincat.name,
-          subCategorie_name: value.subcat.sub_name,
+          subCategorie_name: value.subcategories.sub_name,
           Name: value.name,
           PublishStatus: value.PubilshStatus,
           HighLightDetail: value.HighLightDetail,
