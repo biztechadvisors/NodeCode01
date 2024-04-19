@@ -48,7 +48,7 @@ module.exports = {
     try {
 
       const productsData = req.body;
-      console.log(' ***productsData*** ', productsData)
+      // console.log(' ***productsData*** ', productsData)
 
       if (!Array.isArray(productsData) || productsData.length === 0) {
         return res.status(400).json({ success: false, message: 'Invalid or empty products data' });
@@ -88,12 +88,18 @@ module.exports = {
 
           const categoryId = category.id;
 
+          // Check if subCategoryName is null or undefined
+          if (!subCategoryName) {
+            throw new Error("Subcategory name is null or undefined");
+          }
+
           // Fetch subcategory ID based on subcategory name
           const subcategory = await db.SubCategory.findOne({ where: { sub_name: subCategoryName } });
 
           if (!subcategory) {
             throw new Error(`Subcategory not found for name: ${subCategoryName}`);
           }
+
 
           const subCategoryId = subcategory.id;
 

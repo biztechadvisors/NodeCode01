@@ -308,10 +308,6 @@ module.exports = {
         const imageList = product.productphotos.map((url) => url.imgUrl);
         const variants = product.ProductVariants;
 
-        variants.forEach((variant) => {
-
-        });
-
         const finalResult = {
           variants: variants.map((variant) => ({
             variantId: variant.id,
@@ -850,30 +846,29 @@ module.exports = {
 
   // Search Query
   async searchProducts(req, res) {
-    const { query } = req.query;
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
-
     try {
-      const searchWords = query.split(" ");
+      const { query } = req.query;
+      const limit = req.query.limit ? parseInt(req.query.limit) : 10;
+      const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
 
+      console.log('searchWords***', query)
       const productResults = await db.product.findAndCountAll({
         where: {
           [Op.and]: [
             { PubilshStatus: 'Published' }, // Filter by 'Published' status
             {
-              [Op.or]: searchWords.map((word) => ({
-                [Op.or]: [
-                  { name: { [Op.startsWith]: word } },
-                  { slug: { [Op.startsWith]: word } },
-                  { '$ProductVariants.productName$': { [Op.startsWith]: word } },
-                  { '$ProductVariants.slug$': { [Op.startsWith]: word } },
-                  { '$ProductVariants.shortDesc$': { [Op.substring]: word } },
-                  { '$ProductVariants.longDesc$': { [Op.substring]: word } },
-                  { '$ProductVariants.netPrice$': { [Op.substring]: word } },
-                  { '$ProductVariants.actualPrice$': { [Op.substring]: word } },
-                ],
-              })),
+              [Op.or]: [
+                { name: { [Op.regexp]: query } },
+                { slug: { [Op.regexp]: query } },
+                { desc: { [Op.regexp]: query } },
+                { '$ProductVariants.productName$': { [Op.regexp]: query } },
+                { '$ProductVariants.slug$': { [Op.regexp]: query } },
+                { '$ProductVariants.netPrice$': { [Op.regexp]: query } },
+                { '$ProductVariants.actualPrice$': { [Op.regexp]: query } },
+                { '$maincat.name$': { [Op.regexp]: query } },
+                { '$subcat.sub_name$': { [Op.regexp]: query } },
+              ],
+
             },
           ],
         },
@@ -910,6 +905,7 @@ module.exports = {
           },
           {
             model: db.SubCategory,
+            as: 'subcat',
             attributes: ['id', 'sub_name'],
           },
         ],
@@ -924,8 +920,8 @@ module.exports = {
           const dataList = {
             id: value.id,
             variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
-            category_name: value.maincat.name,
-            subCategorie_name: value.SubCategory.sub_name,
+            category_name: value.maincat?.name,
+            subCategorie_name: value.subcat?.sub_name,
             Name: value.name,
             PublishStatus: value.PubilshStatus,
             HighLightDetail: value.HighLightDetail,
@@ -1096,121 +1092,128 @@ module.exports = {
 
   async relatedProduct(req, res, next) {
     const { productId, slug } = req.query;
-    // console.log("Ram")
-    const limit = req.query.limit ? parseInt(req.query.limit) : 10;
-    const page = req.query.page ? Math.max(1, parseInt(req.query.page)) : 1;
-    const query = {};
-    query.where = {};
-    query.limit = limit;
-    query.order = [["id", "DESC"]];
-    query.attributes = [
-      "id",
-      "name",
-      "slug",
-      "SellerId",
-      "PubilshStatus",
-      "categoryId",
-      "subCategoryId",
-      "childCategoryId",
-    ];
-    query.include = [
-      {
-        model: db.ProductVariant,
-        attributes: [
-          "id",
-          "productName",
-          "qty",
-          "thumbnail",
-          "distributorPrice",
-          "netPrice",
-          "discount",
-          "discountPer",
-        ],
-        include: [{ model: db.productphoto, attributes: ["id", "imgUrl"] }],
+    const limit = parseInt(req.query.limit) || 10;
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const arrData = [];
+
+    const query = {
+      where: {
+        PubilshStatus: "Published",
       },
-    ];
-    query.where.PubilshStatus = {
-      [Op.eq]: "Published",
+      limit,
+      offset: (page - 1) * limit,
+      order: [["id", "DESC"]],
+      attributes: [
+        "id",
+        "name",
+        "slug",
+        "SellerId",
+        "PubilshStatus",
+        "categoryId",
+        "subCategoryId",
+        "childCategoryId",
+      ],
+      include: [
+        {
+          model: db.ProductVariant,
+          attributes: [
+            "id",
+            "productName",
+            "qty",
+            "thumbnail",
+            "distributorPrice",
+            "netPrice",
+            "discount",
+            "discountPer",
+          ],
+          include: [
+            {
+              model: db.productphoto,
+              attributes: ["id", "imgUrl"]
+            },
+            {
+              model: db.VariationOption,
+              as: 'variationOptions',
+              attributes: ['name', 'value'],
+            }
+          ],
+        },
+        { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
+        { model: db.SubCategory, attributes: ['id', 'sub_name'] },
+      ],
     };
+
     try {
       const product = await db.product.findOne({
         where: {
           id: productId,
           slug: slug,
           SellerId: { [Op.ne]: null },
-          PubilshStatus: { [Op.eq]: "Published" },
+          PubilshStatus: "Published",
         },
       });
 
-      if (product && product.id) {
-        const finalResult = await db.product.findAndCountAll({
-          WHERE: query,
-          include: [
-            {
-              model: db.ProductVariant,
-              include: [
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
 
-              ],
-            },
-            { model: db.category, as: 'maincat', attributes: ['id', 'name'] },
-            { model: db.SubCategory, attributes: ['id', 'sub_name'] },
-          ],
-          order: [['id', 'DESC']],
-        });
+      query.where.subCategoryId = product.subCategoryId;
 
-        const arrData = [];
-        for (const value of finalResult.rows) {
+      const products = await db.product.findAndCountAll(query);
 
-          for (const variant of value.ProductVariants) {
+      for (const value of products.rows) {
+        const imageList = value.ProductVariants[0]?.productphotos.map((url) => url.imgUrl) || [];
 
+        const variantAttributes = new Map();
+
+        for (const variant of value.ProductVariants) {
+          for (const option of variant.variationOptions) {
+            if (!variantAttributes.has(option.name)) {
+              variantAttributes.set(option.name, new Set());
+            }
+            variantAttributes.get(option.name).add(option.value);
           }
-
-          const dataList = {
-            id: value.id,
-            variantId: value.ProductVariants[0] ? value.ProductVariants[0].id : null,
-            category_name: value.maincat.name,
-            subCategorie_name: value.SubCategory.sub_name,
-            Name: value.name,
-            referSizeChart: value.referSizeChart ? value.referSizeChart : "",
-            material: value.material ? value.material : "",
-            PublishStatus: value.PubilshStatus,
-            HighLightDetail: value.HighLightDetail,
-            slug: value.slug,
-            Thumbnail: value.photo,
-            actualPrice: value.ProductVariants[0] ? value.ProductVariants[0].actualPrice : null,
-            netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
-            discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
-            discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-            desc: value.desc,
-            PubilshStatus: value.PubilshStatus,
-            productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
-            badges: 'new',
-          };
-          arrData.push(dataList);
         }
-        // console.log("arrData", arrData)
 
-        const startIndex = (page - 1) * limit;
-        const paginatedData = arrData.slice(startIndex, startIndex + limit);
-
-        const response = Util.getFormatedResponse(false, {
-          count: arrData.length,
-          pages: Math.ceil(arrData.length / limit),
-          items: paginatedData,
-        }, {
-          message: 'Success',
-        });
-
-        return res.status(response.code).json(response);
+        const dataList = {
+          id: value.id,
+          variantId: value.ProductVariants[0]?.id || null,
+          category_name: value.maincat?.name,
+          subCategorie_name: value.SubCategory?.sub_name,
+          Name: value.name,
+          PublishStatus: value.PubilshStatus,
+          HighLightDetail: value.HighLightDetail,
+          slug: value.slug,
+          Thumbnail: value.ProductVariants[0]?.thumbnail,
+          referSizeChart: value.referSizeChart || "",
+          material: value.material || "",
+          actualPrice: value.ProductVariants[0]?.actualPrice || null,
+          netPrice: value.ProductVariants[0]?.netPrice || null,
+          discount: value.ProductVariants[0]?.discount || null,
+          discountPer: value.ProductVariants[0]?.discountPer || null,
+          desc: value.desc,
+          PubilshStatus: value.PubilshStatus,
+          productCode: value.ProductVariants[0]?.productCode || null,
+          badges: 'new',
+          Available: value.ProductVariants[0]?.Available || null,
+          Photo: imageList,
+          Attributes: Array.from(variantAttributes.entries()).map(([name, values]) => ({ name, values: Array.from(values) })),
+        };
+        arrData.push(dataList);
       }
-      else {
-        var response = Util.getFormatedResponse(false, {
-          message: "No data found",
-        });
-        res.status(response.code).json(response);
-      }
+
+      const response = Util.getFormatedResponse(false, {
+        count: arrData.length,
+        pages: Math.ceil(arrData.count / limit),
+        items: arrData,
+      }, {
+        message: 'Success',
+      });
+
+      return res.status(response.code).json(response);
     } catch (err) {
-      throw new RequestError(err);
+      console.error("Error in relatedProduct:", err);
+      return res.status(500).json({ message: "Internal server error" });
     }
   },
 

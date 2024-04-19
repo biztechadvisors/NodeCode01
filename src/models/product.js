@@ -54,6 +54,7 @@ module.exports = (sequelize, DataTypes) => {
     // associations can be defined here
     models.product.belongsTo(models.SubCategory, {
       foreignKey: "subCategoryId",
+      as: "subcat"
     });
     models.product.hasMany(models.productphoto, { foreignKey: "productId" });
     models.product.belongsTo(models.SubChildCategory, {
