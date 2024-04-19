@@ -30,7 +30,7 @@ module.exports = {
           }
           return db.category.create({
             name: name,
-            slug: slug,
+            slug: name ? convertToSlug(name) : data.name,
             title: title,
             keyword: keyword,
             desc: desc,
@@ -60,7 +60,7 @@ module.exports = {
           return db.SubCategory.create({
             categoryId: categoryId,
             sub_name: sub_name,
-            slug: slug,
+            slug: sub_name ? convertToSlug(sub_name) : data.sub_name,
             keyword: keyword,
             desc: desc,
           });

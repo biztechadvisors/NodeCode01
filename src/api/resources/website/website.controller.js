@@ -110,7 +110,7 @@ module.exports = {
           include: [
             {
               model: db.SubCategory,
-              as: 'subcategories',
+              // as: 'subcategories',
               order: [["id", "asc"]],
               attributes: ["id", "sub_name", "slug", "thumbnail"],
             }
