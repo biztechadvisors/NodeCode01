@@ -305,7 +305,7 @@ module.exports = {
     ];
     query.include = [
       { model: db.category, as: "maincat", attributes: ["id", "name"] },
-      { model: db.SubCategory, attributes: ["id", "sub_name"] },
+      { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
       { model: db.SubChildCategory, attributes: ["id", "name"] },
       {
         model: db.ProductVariant,
@@ -944,7 +944,7 @@ module.exports = {
           ],
           include: [
             { model: db.category, as: "maincat", attributes: ["id", "name"] },
-            { model: db.SubCategory, attributes: ["id", "sub_name"] },
+            { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
           ],
         },
         { model: db.productphoto, attributes: ["id", "imgUrl"] },
@@ -1067,7 +1067,7 @@ module.exports = {
         ...query,
         include: [
           { model: db.category, as: "maincat", attributes: ["id", "name"] },
-          { model: db.SubCategory, attributes: ["id", "sub_name"] },
+          { model: db.SubCategory, as: 'subcat', attributes: ["id", "sub_name"] },
           {
             model: db.ProductVariant,
             ...whereCond,

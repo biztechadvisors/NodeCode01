@@ -46,9 +46,7 @@ module.exports = {
 
   async uploadProductsAsync(req, res, next) {
     try {
-
       const productsData = req.body;
-      // console.log(' ***productsData*** ', productsData)
 
       if (!Array.isArray(productsData) || productsData.length === 0) {
         return res.status(400).json({ success: false, message: 'Invalid or empty products data' });
@@ -77,7 +75,6 @@ module.exports = {
             referSizeChart,
             material,
             condition,
-
           } = productData;
 
           // Fetch category ID based on category name
@@ -88,24 +85,17 @@ module.exports = {
 
           const categoryId = category.id;
 
-          // Check if subCategoryName is null or undefined
-          if (!subCategoryName) {
-            throw new Error("Subcategory name is null or undefined");
-          }
-
           // Fetch subcategory ID based on subcategory name
           const subcategory = await db.SubCategory.findOne({ where: { sub_name: subCategoryName } });
-
           if (!subcategory) {
             throw new Error(`Subcategory not found for name: ${subCategoryName}`);
           }
-
 
           const subCategoryId = subcategory.id;
 
           let product = await db.product.findOne({ where: { name: name } });
 
-          const brand = brandId ? await db.collection.findOne({ where: { slug: brandId } }) : 1;
+          const brand = brandId ? await db.collection.findOne({ where: { slug: brandId } }) : null;
 
           if (product) {
             // Product already exists, update it
@@ -116,15 +106,15 @@ module.exports = {
                 name: name,
                 slug: slug,
                 status: 'active',
-                brandId: brand ? brand.id : 1,
+                brandId: brand ? brand.id : null,
                 desc: desc,
                 photo: photo ? photo : product.photo,
                 HighLightDetail: HighLightDetail,
-                ShippingDays,
-                PubilshStatus: product.PubilshStatus,
-                referSizeChart,
-                material,
-                condition,
+                ShippingDays: ShippingDays,
+                PubilshStatus: PubilshStatus,
+                referSizeChart: referSizeChart,
+                material: material,
+                condition: condition,
               },
               { where: { id: product.id }, transaction: t }
             );
@@ -140,15 +130,15 @@ module.exports = {
                 slug: slug,
                 status: 'active',
                 SellerId: '1',
-                brandId: brand.id ? brand.id : 1,
+                brandId: brand ? brand.id : null,
                 desc: desc,
                 photo: photo ? photo : null,
                 HighLightDetail: HighLightDetail,
-                ShippingDays,
+                ShippingDays: ShippingDays,
                 PubilshStatus: 'Published',
                 referSizeChart: referSizeChart,
                 material: material,
-                condition,
+                condition: condition,
               },
               { transaction: t }
             );
@@ -157,7 +147,7 @@ module.exports = {
           }
 
           if (Array.isArray(productVariants)) {
-            await Promise.all(productVariants.map(async (variant) => {
+            for (const variant of productVariants) {
               const [productVariant, created] = await db.ProductVariant.findOrCreate({
                 where: { slug: variant.slug },
                 defaults: {
@@ -180,7 +170,7 @@ module.exports = {
                   qtyWarning: variant.qtyWarning,
                   youTubeUrl: variant.youTubeUrl,
                   COD: variant.COD ? variant.COD : 0,
-                  brandId: brand.id ? brand.id : 1,
+                  brandId: brand ? brand.id : null,
                   refundable: variant.refundable,
                   longDesc: variant.longDesc,
                   shortDesc: variant.shortDesc,
@@ -211,7 +201,7 @@ module.exports = {
                   qtyWarning: variant.qtyWarning,
                   youTubeUrl: variant.youTubeUrl,
                   COD: variant.COD ? variant.COD : 0,
-                  brandId: brand.id ? brand.id : 1,
+                  brandId: brand ? brand.id : null,
                   refundable: variant.refundable,
                   longDesc: variant.longDesc,
                   shortDesc: variant.shortDesc,
@@ -224,26 +214,28 @@ module.exports = {
 
               if (Array.isArray(variant.variationOptions)) {
                 for (const option of variant.variationOptions) {
-                  if (option.value !== null && option.value !== undefined) {
+                  // Check if the option name and value are not null or undefined
+                  if (option.name !== null && option.name !== undefined && option.value !== null && option.value !== undefined) {
+                    // Create new VariationOption
                     await db.VariationOption.create({
                       name: option.name,
                       value: option.value,
                       productVariantId: productVariant.id
                     }, { transaction: t });
                   } else {
-                    console.error("Error: VariationOption.value cannot be null or undefined");
+                    console.error("Error: VariationOption name or value cannot be null or undefined");
                   }
                 }
               }
-            }));
+            }
 
+            // Delete old product variants that are not present in the uploaded data
             const existingSlugs = productVariants.map(variant => variant.slug);
             await db.ProductVariant.destroy({
               where: { productId: product.id, slug: { [Op.notIn]: existingSlugs } },
               transaction: t
             });
           }
-
         }
 
         await t.commit();
@@ -1341,6 +1333,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
+                    as: 'subcat',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1378,6 +1371,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
+                    as: 'subcat',
                     where: {
                       // status: { [Op.eq]: 'active' },
                       id: result.subcat.id,
@@ -1420,6 +1414,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
+                    as: 'subcat',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1460,6 +1455,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
+                    as: 'subcat',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
@@ -1502,6 +1498,7 @@ module.exports = {
                 include: [
                   {
                     model: db.SubCategory,
+                    as: 'subcat',
                     attributes: ["id", "sub_name"],
                     include: [
                       {
