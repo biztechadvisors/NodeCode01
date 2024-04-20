@@ -1,5 +1,3 @@
-// migrations/YYYYMMDDHHMMSS-add_referSizeChart_to_product.js
-
 'use strict';
 
 module.exports = {
