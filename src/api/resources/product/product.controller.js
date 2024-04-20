@@ -64,11 +64,12 @@ module.exports = {
             subCategoryName,
             name,
             slug,
-            brandId,
+            Collection,
             photo,
             status,
             productVariants,
             desc,
+            longDesc,
             HighLightDetail,
             ShippingDays,
             PubilshStatus,
@@ -95,7 +96,7 @@ module.exports = {
 
           let product = await db.product.findOne({ where: { name: name } });
 
-          const brand = brandId ? await db.collection.findOne({ where: { slug: brandId } }) : null;
+          const brand = Collection ? await db.collection.findOne({ where: { slug: Collection } }) : null;
 
           if (product) {
             // Product already exists, update it
@@ -108,6 +109,7 @@ module.exports = {
                 status: 'active',
                 brandId: brand ? brand.id : null,
                 desc: desc,
+                longDesc: longDesc,
                 photo: photo ? photo : product.photo,
                 HighLightDetail: HighLightDetail,
                 ShippingDays: ShippingDays,
@@ -115,6 +117,7 @@ module.exports = {
                 referSizeChart: referSizeChart,
                 material: material,
                 condition: condition,
+                // PubilshStatus: "Published",
               },
               { where: { id: product.id }, transaction: t }
             );
@@ -132,6 +135,7 @@ module.exports = {
                 SellerId: '1',
                 brandId: brand ? brand.id : null,
                 desc: desc,
+                longDesc: longDesc,
                 photo: photo ? photo : null,
                 HighLightDetail: HighLightDetail,
                 ShippingDays: ShippingDays,
