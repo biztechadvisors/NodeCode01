@@ -110,7 +110,7 @@ module.exports = {
           include: [
             {
               model: db.SubCategory,
-              // as: 'subcategories',
+              as: 'subcategories',
               order: [["id", "asc"]],
               attributes: ["id", "sub_name", "slug", "thumbnail"],
             }
@@ -220,6 +220,7 @@ module.exports = {
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
             discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
             desc: value.desc,
+            longDesc: value.longDesc,
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             Available: value.ProductVariants[0] ? value.ProductVariants[0].Available : null,
@@ -325,8 +326,8 @@ module.exports = {
             netPrice: variant.netPrice,
             discount: variant.discount,
             discountPer: variant.discountPer,
-            SortDesc: variant.shortDesc,
-            LongDesc: variant.longDesc,
+            SortDesc: product.desc,
+            LongDesc: product.longDesc,
             HighLightDetail: variant.product.HighLightDetail,
             Specification: variant.product.ch_specifications,
             // Add Variation Options
@@ -573,6 +574,7 @@ module.exports = {
     if (filter_SubCategory) {
       const [subCategory] = await db.SubCategory.findAll({
         attributes: ["id"],
+        as: 'subcategories',
         where: { sub_name: filter_SubCategory },
         raw: true,
       });
@@ -658,7 +660,6 @@ module.exports = {
     try {
       const products = await db.product.findAndCountAll({
         where: whereCond0,
-        attributes: ["id", "categoryId", "subCategoryId", "desc", "name", "photo", "slug", 'brandId', 'PubilshStatus'],
         include: [
           {
             model: db.ProductVariant,
@@ -673,8 +674,8 @@ module.exports = {
               "discount",
               "discountPer",
               "productCode",
-              // "shortDesc",
-              // "longDesc",
+              "shortDesc",
+              "longDesc",
               "Available",
             ],
             include: [
@@ -935,6 +936,7 @@ module.exports = {
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
             discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
             desc: value.desc,
+            longDesc: value.longDesc,
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
@@ -1184,6 +1186,7 @@ module.exports = {
           discount: value.ProductVariants[0]?.discount || null,
           discountPer: value.ProductVariants[0]?.discountPer || null,
           desc: value.desc,
+          longDesc: value.longDesc,
           PubilshStatus: value.PubilshStatus,
           productCode: value.ProductVariants[0]?.productCode || null,
           badges: 'new',
@@ -1443,6 +1446,7 @@ module.exports = {
             discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
             discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
             desc: value.desc,
+            longDesc: value.longDesc,
             PubilshStatus: value.PubilshStatus,
             productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
             badges: 'new',
@@ -1798,6 +1802,7 @@ module.exports = {
               discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
               discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
               desc: value.desc,
+              longDesc: value.longDesc,
               PubilshStatus: value.PubilshStatus,
               productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
               badges: 'new',
@@ -1841,6 +1846,7 @@ module.exports = {
           const subCategories = filters.filter_SubCategory.split(",");
           const subCategoryId = await db.SubCategory.findAll({
             attributes: ["id"],
+            as: 'subcategories',
             where: { slug: { [Op.in]: subCategories } },
             raw: true,
           });
@@ -1901,6 +1907,7 @@ module.exports = {
           discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
           discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
           desc: value.desc,
+          longDesc: value.longDesc,
           PubilshStatus: value.PubilshStatus,
           productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
           badges: 'new',

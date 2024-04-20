@@ -149,7 +149,7 @@ module.exports = {
       db.category
         .findAll({
           attributes: ["id", "name"],
-          include: [{ model: db.SubCategory }],
+          include: [{ model: db.SubCategory, as: 'subcategories' }],
         })
         .then((list) => {
           res.status(200).json({ success: true, data: list });
@@ -165,6 +165,7 @@ module.exports = {
   async getSubCategoryList(req, res, next) {
     try {
       db.SubCategory.findAll({
+        as: 'subcategories',
         where: { categoryId: req.query.categoryId },
         include: [{ model: db.category, attributes: ["id", "name"] }],
       })
@@ -271,6 +272,7 @@ module.exports = {
         include: [
           {
             model: db.SubCategory,
+            as: 'subcategories',
             attributes: ["id", "sub_name"],
             include: [{ model: db.category, attributes: ["id", "name"] }],
           },
@@ -616,6 +618,7 @@ module.exports = {
           include: [
             {
               model: db.SubCategory,
+              as: 'subcategories',
               include: [{ model: db.SubChildCategory }],
             },
           ],
@@ -718,6 +721,7 @@ module.exports = {
       }
       db.SubCategory.findAll({
         attributes: ["id", "sub_name"],
+        as: 'subcategories',
         include: [
           {
             model: db.product,
@@ -1067,7 +1071,7 @@ module.exports = {
         query.attributes = ["id", "name"];
         query.include = [
           { model: db.category, attributes: ["id", "name"], as: "category" },
-          { model: db.SubCategory, attributes: ["id", "sub_name"] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
         ];
         db.SubChildCategory.findAll(query).then((category) => {
           if (category) {
@@ -1112,7 +1116,7 @@ module.exports = {
         query.attributes = ["id", "name"];
         query.include = [
           { model: db.category, attributes: ["id", "name"], as: "category" },
-          { model: db.SubCategory, attributes: ["id", "sub_name"] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
         ];
         db.SubChildCategory.findAll(query).then((category) => {
           if (category) {
@@ -1154,7 +1158,7 @@ module.exports = {
         query.attributes = ["id", "name"];
         query.include = [
           { model: db.category, attributes: ["id", "name"], as: "category" },
-          { model: db.SubCategory, attributes: ["id", "sub_name"] },
+          { model: db.SubCategory, as: 'subcategories', attributes: ["id", "sub_name"] },
         ];
         db.SubChildCategory.findAll(query).then((category) => {
           if (category) {
@@ -1201,6 +1205,7 @@ module.exports = {
         include: [
           {
             model: db.SubCategory,
+            as: 'subcategories',
             required: false,
             attributes: ["sub_name", "slug"],
             include: [

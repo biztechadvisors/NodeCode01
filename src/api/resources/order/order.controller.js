@@ -113,13 +113,13 @@ cron.schedule('0 0 * * *', async () => {
     }
 });
 
-updateOrdQuantityProd = async (ordProducts) => {
+const updateOrdQuantityProd = async (ordProducts) => {
     try {
         if (!ordProducts || ordProducts.length === 0) {
             throw new Error('Invalid input. No products provided.');
         }
 
-        const variantIds = ordProducts.map(product => product.selectedVariant.id);
+        const variantIds = ordProducts.map(product => product.varientId);
         // console.log('Variant IDs:', variantIds); // Debug logging
 
         const variants = await db.ProductVariant.findAll({ where: { id: { [Op.in]: variantIds } } });
@@ -133,16 +133,16 @@ updateOrdQuantityProd = async (ordProducts) => {
 
         // Update the quantity for each ordered product variant
         for (const ordProduct of ordProducts) {
-            const variant = variants.find(v => v.id === ordProduct.selectedVariant.id);
+            const variant = variants.find(v => v.id === ordProduct.varientId);
 
             if (variant) {
                 // Validate that the order quantity does not exceed the available quantity
-                if (ordProduct.quantity > variant.qty) {
+                if (ordProduct.qty > variant.qty) {
                     throw new Error(`Order quantity exceeds available quantity for variant ID ${variant.id}`);
                 }
 
                 // Update the variant quantity by subtracting the order quantity
-                const updatedQuantity = variant.qty - ordProduct.quantity;
+                const updatedQuantity = variant.qty - ordProduct.qty;
 
                 // Update the variant quantity in the database
                 await db.ProductVariant.update({ qty: updatedQuantity }, { where: { id: variant.id } });
@@ -465,7 +465,7 @@ module.exports = {
                 }, { transaction: t });
 
                 // Update product variant quantities
-                await updateOrdQuantityProd(productList, t);
+                await updateOrdQuantityProd(cartEntries, t);
 
                 await mailer.sendInvoiceForCustomerNew(
                     req.body,
