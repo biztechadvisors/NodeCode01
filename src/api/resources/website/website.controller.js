@@ -420,8 +420,8 @@ module.exports = {
           gallery: value.ProductVariants[0].productphotos,
           youTubeUrl: value.ProductVariants[0].youTubeUrl,
           qtyWarning: value.ProductVariants[0].qtyWarning,
-          shortDesc: value.ProductVariants[0].shortDesc,
-          longDesc: value.ProductVariants[0].longDesc,
+          shortDesc: value.shortDesc,
+          longDesc: value.longDesc,
           distributorPrice: value.ProductVariants[0].distributorPrice,
           netPrice: value.ProductVariants[0].netPrice,
           discount: Math.round(
@@ -504,8 +504,8 @@ module.exports = {
           gallery: value.ProductVariants[0].productphotos,
           youTubeUrl: value.ProductVariants[0].youTubeUrl,
           qtyWarning: value.ProductVariants[0].qtyWarning,
-          shortDesc: value.ProductVariants[0].shortDesc,
-          longDesc: value.ProductVariants[0].longDesc,
+          shortDesc: value.shortDesc,
+          longDesc: value.longDesc,
           distributorPrice: value.ProductVariants[0].distributorPrice,
           netPrice: value.ProductVariants[0].netPrice,
           discount: Math.round(
@@ -673,8 +673,8 @@ module.exports = {
               "discount",
               "discountPer",
               "productCode",
-              "shortDesc",
-              "longDesc",
+              // "shortDesc",
+              // "longDesc",
               "Available",
             ],
             include: [
@@ -712,8 +712,8 @@ module.exports = {
           netPrice: value.ProductVariants[0] ? value.ProductVariants[0].netPrice : null,
           discount: value.ProductVariants[0] ? value.ProductVariants[0].discount : null,
           discountPer: value.ProductVariants[0] ? value.ProductVariants[0].discountPer : null,
-          shortDesc: value.ProductVariants[0] ? value.ProductVariants[0].shortDesc : null,
-          longDesc: value.ProductVariants[0] ? value.ProductVariants[0].longDesc : null,
+          shortDesc: value ? value.desc : null,
+          longDesc: value ? value.longDesc : null,
           PubilshStatus: value.PubilshStatus,
           productCode: value.ProductVariants[0] ? value.ProductVariants[0].productCode : null,
           badges: 'new',
@@ -1104,17 +1104,12 @@ module.exports = {
       limit,
       offset: (page - 1) * limit,
       order: [["id", "DESC"]],
-      attributes: [
-        "id",
-        "name",
-        "slug",
-        "SellerId",
-        "PubilshStatus",
-        "categoryId",
-        "subCategoryId",
-        "childCategoryId",
-      ],
       include: [
+        {
+          model: db.productphoto,
+          attributes: ['id', 'imgUrl'],
+          order: [['createdAt', 'DESC']],
+        },
         {
           model: db.ProductVariant,
           attributes: [
@@ -1128,10 +1123,6 @@ module.exports = {
             "discountPer",
           ],
           include: [
-            {
-              model: db.productphoto,
-              attributes: ["id", "imgUrl"]
-            },
             {
               model: db.VariationOption,
               as: 'variationOptions',
@@ -1163,7 +1154,7 @@ module.exports = {
       const products = await db.product.findAndCountAll(query);
 
       for (const value of products.rows) {
-        const imageList = value.ProductVariants[0]?.productphotos.map((url) => url.imgUrl) || [];
+        const imageList = value.productphotos.map((url) => url.imgUrl);
 
         const variantAttributes = new Map();
 
@@ -1185,7 +1176,7 @@ module.exports = {
           PublishStatus: value.PubilshStatus,
           HighLightDetail: value.HighLightDetail,
           slug: value.slug,
-          Thumbnail: value.ProductVariants[0]?.thumbnail,
+          Thumbnail: value?.photo,
           referSizeChart: value.referSizeChart || "",
           material: value.material || "",
           actualPrice: value.ProductVariants[0]?.actualPrice || null,
@@ -1708,6 +1699,8 @@ module.exports = {
                 [Op.or]: [
                   { name: { [Op.like]: `%${word}%` } },
                   { slug: { [Op.like]: `%${word}%` } },
+                  { desc: { [Op.like]: `%${word}%` } },
+                  { longDesc: { [Op.like]: `%${word}%` } },
                 ],
               })),
 
@@ -1725,14 +1718,6 @@ module.exports = {
 
               ...searchWords.map((word) => ({
                 '$ProductVariants.actualPrice$': { [Op.like]: `%${word}%` },
-              })),
-
-              ...searchWords.map((word) => ({
-                '$ProductVariants.shortDesc$': { [Op.like]: `%${word}%` },
-              })),
-
-              ...searchWords.map((word) => ({
-                '$ProductVariants.longDesc$': { [Op.like]: `%${word}%` },
               })),
 
               ...searchWords.map((word) => ({

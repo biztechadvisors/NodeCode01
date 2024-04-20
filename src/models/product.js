@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       material: DataTypes.STRING,
       desc: DataTypes.TEXT,
+      longDesc: DataTypes.TEXT,
       SellerId: DataTypes.INTEGER,
       LocalDeiveryCharge: DataTypes.DOUBLE,
       ZonalDeiveryCharge: DataTypes.DOUBLE,

@@ -171,9 +171,9 @@ module.exports = {
                   youTubeUrl: variant.youTubeUrl,
                   COD: variant.COD ? variant.COD : 0,
                   brandId: brand ? brand.id : null,
-                  refundable: variant.refundable,
-                  longDesc: variant.longDesc,
-                  shortDesc: variant.shortDesc,
+                  refundable: variant.refundable ? variant.refundable : 0,
+                  // longDesc: variant.longDesc,
+                  // shortDesc: variant.shortDesc,
                   stockType: variant.stockType,
                   Available: variant.Available,
                 },
@@ -202,9 +202,9 @@ module.exports = {
                   youTubeUrl: variant.youTubeUrl,
                   COD: variant.COD ? variant.COD : 0,
                   brandId: brand ? brand.id : null,
-                  refundable: variant.refundable,
-                  longDesc: variant.longDesc,
-                  shortDesc: variant.shortDesc,
+                  refundable: variant.refundable ? variant.refundable : 0,
+                  // longDesc: variant.longDesc,
+                  // shortDesc: variant.shortDesc,
                   stockType: variant.stockType,
                   Available: variant.Available,
                 }, { transaction: t });
@@ -269,6 +269,7 @@ module.exports = {
         status,
         productVariants,
         desc,
+        longDesc
       } = req.body;
 
       const variants = JSON.parse(productVariants);
@@ -293,6 +294,7 @@ module.exports = {
               material: material,
               brandId: brand ? brand : null,
               desc: desc,
+              longDesc: longDesc,
               photo: req.file ? req.file.location : "",
             },
             { transaction: t }
@@ -316,8 +318,8 @@ module.exports = {
                 discount: variant.discount || 0,
                 netPrice: variant.netPrice || 0,
                 brandId: brand ? brand : null,
-                shortDesc: variant.shortDesc || "",
-                longDesc: variant.longDesc || ""
+                // shortDesc: variant.shortDesc || "",
+                COD: variant.COD || 0
               },
               { transaction: t }
             );
@@ -526,6 +528,7 @@ module.exports = {
         collection,
         status,
         desc,
+        longDesc,
         priceDetails,
         ShippingDays,
         PubilshStatus,
@@ -546,12 +549,13 @@ module.exports = {
         categoryId: selectedCategory || updatedProduct.categoryId,
         subCategoryId: selectedSubCategory || updatedProduct.subCategoryId,
         name: name || updatedProduct.name,
-        slug: slug || updatedProduct.slug,
+        slug: convertToSlug(name) || updatedProduct.slug,
         referSizeChart: referSizeChart || updatedProduct.referSizeChart,
         material: material || updatedProduct.material,
         status: parseInt(status) ? "active" : "inactive",
         brandId: collection || updatedProduct.collection,
         desc: desc || updatedProduct.desc,
+        longDesc: longDesc || updatedProduct.longDesc,
         ShippingDays: ShippingDays || updatedProduct.ShippingDays,
         PubilshStatus: PubilshStatus || updatedProduct.PubilshStatus,
         LocalDeiveryCharge: LocalDeiveryCharge || updatedProduct.LocalDeiveryCharge,
@@ -584,8 +588,8 @@ module.exports = {
             discount: variant.discount || 0,
             total: variant.total || 0,
             netPrice: variant.netPrice || 0,
-            longDesc: variant.longDesc || "",
-            shortDesc: variant.shortDesc || "",
+            unitSize: variant.unitSize || 1,
+            refundable: variant.refundable || "",
             COD: variant.COD,
             stockType: variant.stockType
 
@@ -605,8 +609,8 @@ module.exports = {
             discount: variant.discount || 0,
             total: variant.total || 0,
             netPrice: variant.netPrice || 0,
-            longDesc: variant.longDesc || "",
-            shortDesc: variant.shortDesc || "",
+            unitSize: variant.unitSize || 1,
+            refundable: variant.refundable || "",
             COD: variant.COD || 0,
             stockType: variant.stockType || 0
           });

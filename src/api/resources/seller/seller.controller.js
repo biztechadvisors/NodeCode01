@@ -78,6 +78,8 @@ module.exports = {
         priceDetails,
         HighLightDetais,
         tags,
+        desc,
+        longDesc
       } = req.body;
       db.user
         .findOne({
@@ -104,6 +106,8 @@ module.exports = {
                   HighLightDetail: HighLightDetais,
                   name: priceDetails[0].productName,
                   slug: convertToSlug(priceDetails[0].productName),
+                  desc: desc,
+                  longDesc: longDesc
                 },
                 { transaction: t }
               );
@@ -164,12 +168,12 @@ module.exports = {
                   productCode: priceDetails[i].productCode
                     ? priceDetails[i].productCode
                     : "PD" + Math.random().toString(36).substr(2, 4),
-                  longDesc: priceDetails[i].longDesc
-                    ? priceDetails[i].longDesc
-                    : "",
-                  shortDesc: priceDetails[i].shortDesc
-                    ? priceDetails[i].shortDesc
-                    : "",
+                  // longDesc: priceDetails[i].longDesc
+                  //   ? priceDetails[i].longDesc
+                  //   : "",
+                  // shortDesc: priceDetails[i].shortDesc
+                  //   ? priceDetails[i].shortDesc
+                  //   : "",
                   distributorPrice: priceDetails[i].distributorPrice
                     ? priceDetails[i].distributorPrice
                     : 0,
@@ -388,7 +392,9 @@ module.exports = {
         HighLightDetais,
         tags,
         material,
-        referSizeChart
+        referSizeChart,
+        desc,
+        longDesc
       } = req.body;
       db.user
         .findOne({
@@ -416,7 +422,9 @@ module.exports = {
                   name: priceDetails[0].productName,
                   slug: convertToSlug(priceDetails[0].productName),
                   material: material,
-                  referSizeChart: referSizeChart
+                  referSizeChart: referSizeChart,
+                  desc: desc,
+                  longDesc: longDesc
                 },
                 { where: { id: productId } },
                 { transaction: t }
@@ -482,8 +490,8 @@ module.exports = {
                   productCode: priceDetails[i].productCode
                     ? priceDetails[i].productCode
                     : "PD" + Math.random().toString(36).substr(2, 4),
-                  longDesc: priceDetails[i].longDesc,
-                  shortDesc: priceDetails[i].shortDesc,
+                  // longDesc: priceDetails[i].longDesc,
+                  // shortDesc: priceDetails[i].shortDesc,
                   distributorPrice: priceDetails[i].distributorPrice,
                   buyerPrice: priceDetails[i].buyerPrice,
                   marginPrice: marginPrice,
@@ -1045,22 +1053,7 @@ module.exports = {
     query.offset = limit * (page - 1);
 
     query.order = [["id", "DESC"]];
-    query.attributes = [
-      "id",
-      "SellerId",
-      "name",
-      "photo",
-      "LocalDeiveryCharge",
-      "ZonalDeiveryCharge",
-      "NationalDeiveryCharge",
-      "WarrantyType",
-      "WarrantyPeriod",
-      "PubilshStatus",
-      "ShippingDays",
-      "HighLightDetail",
-      "referSizeChart",
-      "material"
-    ];
+
     try {
       const totalProducts = await db.product.count({ where: query.where }); // Get total count of products that match the query
       const products = await db.product.findAll({
