@@ -165,7 +165,6 @@ module.exports = {
   async getSubCategoryList(req, res, next) {
     try {
       db.SubCategory.findAll({
-        as: 'subcategories',
         where: { categoryId: req.query.categoryId },
         include: [{ model: db.category, attributes: ["id", "name"] }],
       })
