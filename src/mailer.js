@@ -825,6 +825,7 @@ module.exports = {
   // },
 
 
+
   sendInvoiceForCustomerNew: (body, address, order_id, shipment_id, customer, deliveryAddress) => {
     // Your existing code here...
     const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
@@ -869,7 +870,6 @@ module.exports = {
 
     const grandTotalInWords = convertNumberToWords(grandTotal);
 
-
     // Create a PDF document
     const doc = new PDFDocument({ margin: 50 });
 
@@ -877,166 +877,173 @@ module.exports = {
     const pdfPath = 'invoice.pdf';
     const pdfStream = fs.createWriteStream(pdfPath);
     doc.pipe(pdfStream);
+
     const htmlHeader = `<html lang="en">
 
-    <head>
-        <title>Invoice</title>
-    </head>   
-    <body style="background:rgb(254, 252, 252);">
-        <div class="invoice"
-            style=" font-family: Arial, sans-serif; max-width: full ;margin: 20px auto;padding: 20px;border: 1px solid #ddd;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;align-items: center;  ">
-            <div class="invoice-header"
-                style="  display:flex; justify-content: space-between;align-items: center;width: 100%;;">
+  <head>
+      <title>Invoice</title>
+  </head>   
+  <body style="background:rgb(254, 252, 252);">
+      <div class="invoice"
+          style=" font-family: Arial, sans-serif; max-width: full ;margin: 20px auto;padding: 20px;border: 1px solid #ddd;box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);display: flex;flex-direction: column;align-items: center;  ">
+          <div class="invoice-header"
+              style="  display:flex; justify-content: space-between;align-items: center;width: 100%;;">
+
+              <img style="max-width: 80px;height:70px" src="https://www.ninobyvani.com/assets/imgs/theme/logo.png" width='80' alt="codenox">
+              <h3 style="color:rgb(0, 0, 0);display:block;text-aling:right;margin-left:65%">Tax Invoice/Bill of
+                  Supply/Cash Memo
+              </h3>
+          </div>
+          <div class="invoice-body" style="display:flex;justify-content:space-between;width:100%;">
+              <div style="flex: 0 0 47%;text-align:left;">
+                  <h4 style="text-align:left;">Sold By:</h4>
+                  <p style="text-align: left;">Nino</p>
+                  <p style="text-align:left;">Gali no. 209, </p>
+                  <p style="text-align:left;">
+                  Universital Industrial Estate, Next to Wadia school,
+                  </p>
+                  <p style="text-align:left;">
+                  J.P. Road, Andheri-west, Mumbai- 400058
+                  </p>
+                  <br>
+                  <p style="text-align:left;"><b>PAN No:</b>Hard_Code AC02BFRT56</p>
+                  <p style="text-align:left;"><b>GST Registration No:</b>6723829829</p>
+                  <div class="order-details" style="margin-top: 20px;text-align:left;">
+                      <p style="text-align:left;margin-top:20px"><b>Order Number:</b> </p>
+                      <p style="text-align:left;"><b>Order Date:</b></p>
   
-                <img style="max-width: 80px;height:70px" src="https://www.ninobyvani.com/assets/imgs/theme/logo.png" width='80' alt="codenox">
-                <h3 style="color:rgb(0, 0, 0);display:block;text-aling:right;margin-left:65%">Tax Invoice/Bill of
-                    Supply/Cash Memo
-                </h3>
-            </div>
-            <div class="invoice-body" style="display:flex;justify-content:space-between;width:100%;">
-                <div style="flex: 0 0 47%;text-align:left;">
-                    <h4 style="text-align:left;">Sold By:</h4>
-                    <p style="text-align: left;">Nino</p>
-                    <p style="text-align:left;">Gali no. 209, </p>
-                    <p style="text-align:left;">
-                    Universital Industrial Estate, Next to Wadia school,
-                    </p>
-                    <p style="text-align:left;">
-                    J.P. Road, Andheri-west, Mumbai- 400058
-                    </p>
-                    <br>
-                    <p style="text-align:left;"><b>PAN No:</b>Hard_Code AC02BFRT56</p>
-                    <p style="text-align:left;"><b>GST Registration No:</b>6723829829</p>
-                    <div class="order-details" style="margin-top: 20px;text-align:left;">
-                        <p style="text-align:left;margin-top:20px"><b>Order Number:</b> </p>
-                        <p style="text-align:left;"><b>Order Date:</b>28/03/2024</p>
-    
-                    </div>
-                </div>
-                <div style="flex: 0 0 50%;text-align:right;text-align:right;">
-                    <div class="buyer" style="margin-top: 20px;text-align:right;">
-                        <h4 style="margin-top: 20px;text-align:right;">Billing Address:</h4>
-                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.id}</p>
-                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.name} ${deliveryAddress.lastName}</p>
-                        <p style="margin-top: 20px;text-align:right;">
-                            ${deliveryAddress.StreetAddress} ${deliveryAddress.ShippingAddress}
-                            ${deliveryAddress.city}</p>
-                        <p style="margin-top: 20px;text-align:right;">
-                            ${deliveryAddress.state} ${deliveryAddress.country}
-                            ${deliveryAddress.pincode}
-                        </p>
-    
-                    </div>
-                    <div class="buyer" style="margin-top: 20px;text-align:right;">
-                        <h4 style="margin-top: 20px;text-align:right;">Shipping Address:</h4>
-                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.name2} ${deliveryAddress.lastName2}</p>
-                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.StreetAddress2} ${deliveryAddress.ShippingAddress2}
-                            ${deliveryAddress.city2}</p>
-                        <p style="margin-top: 20px;text-align:right;">${deliveryAddress.state2}
-                            ${deliveryAddress.country2} ${deliveryAddress.pincode2}</p>
-    
-                    </div>
-                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Number:</b>{{created_at}}</p>
-                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Details:</b> (HARD CODE)MP-FIDA-1034-2324</p>
-                    <p style="margin-top: 20px;text-align:right;"><b>Invoice Date:</b>{{invoice_date}}</p>
-                </div>
-            </div>
-            <table
-                style="width: 100%; border-collapse: collapse;margin-bottom: 20px; margin-top: 20px; border: 2px solid black;">
-                <thead style="border:2px solid black">
-                    <tr style="border:2px solid black">
-                        <th style="border: 2px solid black;">SL No.</th>
-                        <th style="border: 2px solid black;">Description</th>
-                        <th style="border: 2px solid black;">Unit Price</th>
-                        <th style="border: 2px solid black;">Quantity</th>
-                        <th style="border: 2px solid black;">Net Amount</th>
-                        <th style="border: 2px solid black;">Tax Rate</th>
-                        <th style="border: 2px solid black;">Tax Amount</th>
-                        <th style="border: 2px solid black;">Total Amount</th>
-                    </tr>
-                </thead>
-                <tbody>
-                ${body.product.map(function (item) {
+                  </div>
+              </div>
+              <div style="flex: 0 0 50%;text-align:right;text-align:right;">
+                  <div class="buyer" style="margin-top: 20px;text-align:right;">
+                      <h4 style="margin-top: 20px;text-align:right;">Billing Address:</h4>
+                      
+                      <p style="margin-top: 20px;text-align:right;">
+                          ${deliveryAddress.StreetAddress} ${deliveryAddress.ShippingAddress}
+                          ${deliveryAddress.city}</p>
+                      <p style="margin-top: 20px;text-align:right;">
+                          ${deliveryAddress.state} ${deliveryAddress.country}
+                          ${deliveryAddress.pincode}
+                      </p>
+                      <p style="margin-top: 20px;text-align:right;">
+                          ${deliveryAddress.phone} 
+                      </p>
+  
+                  </div>
+                  <div class="buyer" style="margin-top: 20px;text-align:right;">
+                      <h4 style="margin-top: 20px;text-align:right;">Shipping Address:</h4>
+                      <p style="margin-top: 20px;text-align:right;">${deliveryAddress.StreetAddress} ${deliveryAddress.ShippingAddress}</p></p>
+  
+                  </div>
+                  <p style="margin-top: 20px;text-align:right;"><b>Invoice Number:</b>{{created_at}}</p>
+                  <p style="margin-top: 20px;text-align:right;"><b>Invoice Details:</b> (HARD CODE)MP-FIDA-1034-2324</p>
+                  <p style="margin-top: 20px;text-align:right;"><b>Invoice Date:</b>{{invoice_date}}</p>
+              </div>
+          </div>
+          <table
+              style="width: 100%; border-collapse: collapse;margin-bottom: 20px; margin-top: 20px; border: 2px solid black;">
+              <thead style="border:2px solid black">
+                  <tr style="border:2px solid black">
+                      <th style="border: 2px solid black;">SL No.</th>
+                      <th style="border: 2px solid black;">Description</th>
+                      <th style="border: 2px solid black;">Unit Price</th>
+                      <th style="border: 2px solid black;">Quantity</th>
+                      <th style="border: 2px solid black;">Net Amount</th>
+                      <th style="border: 2px solid black;">Tax Rate</th>
+                      <th style="border: 2px solid black;">Tax Amount</th>
+                      <th style="border: 2px solid black;">Total Amount</th>
+                  </tr>
+              </thead>
+              <tbody>
+              ${body.product.map(function (item, index) {
       var amount = item.netPrice - item.discount;
-      var totalPrice = item.selectedVariant.qty * item.netPrice;
-      var rate = (item.discount / amount) * 100
+      var totalPrice = item.quantity * item.netPrice;
+      var rate = (item.discount / amount) * 100;
+      var serialNumber = index + 1; // Start serial numbers from 1
+
       return `
-                  <tr style="border: 2px solid black">
-                        <td style="border: 2px solid black;">${item.selectedVariant.id}</td>
-                        <td style="border: 2px solid black;">${item.Name} </td>
-                        <td style="border: 2px solid black;">${item.netPrice}</td>
-                        <td style="border: 2px solid black;">${item.selectedVariant.qty}</td>
-                        <td style="border: 2px solid black;">${totalPrice}</td>
-                        <td style="border: 2px solid black;">${rate}%</td>
-                       <td style="border: 2px solid black;">${item.discount}</td>
-                        <td style="border: 2px solid black;">${totalPrice}</td>
-                    </tr>`
-        ;
+                <tr style="border: 2px solid black">
+                    <td style="border: 2px solid black;">${serialNumber}</td> <!-- Use the generated serial number -->
+                    <td style="border: 2px solid black;">${item.Name}</td>
+                    <td style="border: 2px solid black;">${item.netPrice}</td>
+                    <td style="border: 2px solid black;">${item.quantity}</td>
+                    <td style="border: 2px solid black;">${totalPrice}</td>
+                    <td style="border: 2px solid black;">${item.discountPer}%</td>
+                    <td style="border: 2px solid black;">${item.discount}</td>
+                    <td style="border: 2px solid black;">${totalPrice}</td>
+                </tr>`;
+    }, this).join("")}
+            
+              
+              ${body.product.map(function (item) {
+      var totalDiscount = body.product.reduce((total, item) => total + item.discount, 0);
+      console.log("TotalDiscount", totalDiscount)
+      return `
+                  <tr style="border:2px solid black">
+                      <td colspan="6" style="border: 2px solid black; text-align: left;"><b>TOTAL:</b></td>
+                      <td style="border: 2px solid black;">${totalDiscount === 0 ? 0 : item.totalDiscount}</td>
+                      <td style="border: 2px solid black;">${body.grandTotal}</td>
+                  </tr>`
     }).join("")}
-                    <tr style="border:2px solid black">
-                        <td colspan="6" style="border: 2px solid black; text-align: left;"><b>TOTAL:</b></td>
-                        <td style="border: 2px solid black;">${body.total_discount}</td>
-                        <td style="border: 2px solid black;">${body.grandTotal}</td>
-                    </tr>
-                    <tr>
-                        <td colspan="9" style="border: 2px solid black; text-align: left;"><b>Amount in Words:</b>
-                           <span style="margin-left:70px;">${grandTotalInWords}</span></td>
-                    </tr>
-                    <tr>
-                        <td colspan="9" style="text-align: right;"><b>Nino</b><br></td>
-                    </tr>
-                    <tr>
-                        <td colspan="9" style="text-align: right;"><b>Authorized Signatory</b></td>
-                    </tr>
-                </tbody>
-            </table>
-            <!-- Payment Details Table -->
-            <table style="width: 100%; border-collapse: collapse; margin-top: 20px; border: 2px solid black;">
-                <tbody>
-                    <tr style="border:2px solid black">
-                        <td style="border:2px solid black">Payment Transaction ID: <br>
-                            <p style="font-size: 12px;">paymentInfo.payment_id</p>
-                        </td>
-                        <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
-                            </p>
-                        </td>
-                        <td rowSpan="2" style="border:2px solid black">Invoice Value:<p style="font-size: 12px;">
-                                ${body.grandTotal} </p>
-                        </td>
-                        <td style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">Gift_Card
-                                paymentMethod</p>
-                        </td>
-                    </tr>
-                    <tr style="border:2px solid black">
-                        <td style="border:2px solid black">Payment Transaction ID: <br>
-                            <p style="font-size: 12px;">paymentInfo.payment_id</p>
-                        </td>
-                        <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
-                            </p>
-                        </td>
-                        <td colspan="2" style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">
-                                ${body.paymentMethod}</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-    
-        </div>
-    </body>
-    
-    </html>`;
+                  <tr>
+                      <td colspan="9" style="border: 2px solid black; text-align: left;"><b>Amount in Words:</b>
+                         <span style="margin-left:70px;">${grandTotalInWords}</span></td>
+                  </tr>
+                  <tr>
+                      <td colspan="9" style="text-align: right;"><b>Nino</b><br></td>
+                  </tr>
+                  <tr>
+                      <td colspan="9" style="text-align: right;"><b>Authorized Signatory</b></td>
+                  </tr>
+              </tbody>
+          </table>
+          <!-- Payment Details Table -->
+          <table style="width: 100%; border-collapse: collapse; margin-top: 20px; border: 2px solid black;">
+              <tbody>
+                  <tr style="border:2px solid black">
+                      <td style="border:2px solid black">Payment Transaction ID: <br>
+                          <p style="font-size: 12px;">paymentInfo.payment_id</p>
+                      </td>
+                      <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
+                          </p>
+                      </td>
+                      <td rowSpan="2" style="border:2px solid black">Invoice Value:<p style="font-size: 12px;">
+                              ${body.grandTotal} </p>
+                      </td>
+                      <td style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">Gift_Card
+                              paymentMethod</p>
+                      </td>
+                  </tr>
+                  <tr style="border:2px solid black">
+                      <td style="border:2px solid black">Payment Transaction ID: <br>
+                          <p style="font-size: 12px;">paymentInfo.payment_id</p>
+                      </td>
+                      <td style="border:2px solid black">Date & Time: <p style="font-size: 12px;">{{invoice_date}}
+                          </p>
+                      </td>
+                      <td colspan="2" style="border:2px solid black">Mode of Payment:<p style="font-size: 12px;">
+                              ${body.paymentMethod}</p>
+                      </td>
+                  </tr>
+              </tbody>
+          </table>
+  
+      </div>
+  </body>
+  
+  </html>`;
     const htmlFooter = `<tfooter>
-    <tr>
-      <td style="height:50px;"></td>
-    </tr>
-    <tr>
-    <td colspan="5" style="font-size:14px;padding:5px;">
-    <p style="font-size:14px;margin:0 0 6px 0;">If you use a mobile device, you can receive notifications about the delivery of your package and track it from our free <a href="#">ninobyvani.com</a>.</p>
-        <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team codenox<br><br>
-        For any queries please contact us at: <b>ninobyvani@gmail.com</b>
-      </td>
-    </tr>
-  </tfooter>`;
+  <tr>
+    <td style="height:50px;"></td>
+  </tr>
+  <tr>
+  <td colspan="5" style="font-size:14px;padding:5px;">
+  <p style="font-size:14px;margin:0 0 6px 0;">If you use a mobile device, you can receive notifications about the delivery of your package and track it from our free <a href="#">ninobyvani.com</a>.</p>
+      <strong style="display:block;margin:0 0 10px 0;">Regards,</strong>Team codenox<br><br>
+      For any queries please contact us at: <b>ninobyvani@gmail.com</b>
+    </td>
+  </tr>
+</tfooter>`;
     const totalHtml = htmlHeader + htmlFooter;
 
     // Define PDF options
@@ -1074,7 +1081,7 @@ module.exports = {
 
             smtpTransport.sendMail({
               from: process.env.MAIL_FROM,
-              to: deliveryAddress.email,
+              to: customer ? customer.email : deliveryAddress.email,
               subject: "Your NinoByWani Order Confirmation. Please share your feedback",
               html: 'Please see the attached PDF for your order confirmation.',
               attachments: [attachment],
