@@ -1308,4 +1308,38 @@ module.exports = {
     });
   },
 
+sendOrderTrackingEmail: async (customer_email, htmlContent) => {
+    try {
+      const smtpTransport = nodemailer.createTransport({
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
+        secure: true,
+        auth: {
+          user: process.env.MAIL_USERNAME,
+          pass: process.env.MAIL_PASSWORD,
+        },
+      });
+
+
+      await smtpTransport.sendMail({
+        from: process.env.MAIL_FROM,
+        to: customer_email,
+        subject: "Your Order Tracking Information",
+        html: htmlContent,
+        headers: {
+          'X-Mailer': 'MyApp Mailer',
+          'List-Unsubscribe': '<unsubscribe@example.com>',
+          'Precedence': 'bulk',
+          'X-Auto-Response-Suppress': 'All',
+        }
+      });
+
+
+      return true;
+    } catch (error) {
+      console.error('Error sending order tracking email:', error);
+      throw new Error('Error sending order tracking email');
+    }
+  },
+
 };

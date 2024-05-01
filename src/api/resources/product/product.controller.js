@@ -44,7 +44,7 @@ function convertToSlug(text) {
 
 module.exports = {
 
-  async uploadProductsAsync(req, res, next) {
+    async uploadProductsAsync(req, res, next) {
     try {
       const productsData = req.body;
 
@@ -224,7 +224,7 @@ module.exports = {
       next(err);
     }
   },
-
+  
   /* Add user api start here................................*/
 
   async addProduct(req, res, next) {
